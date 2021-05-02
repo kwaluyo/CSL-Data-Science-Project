@@ -1,0 +1,157 @@
+---
+title: "Task 1 - Data Science Project"
+author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
+date: "1000555 & 1129446" 
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r echo=FALSE}
+files <- list.files("~/CSL/TMM_norm_filt_counts")
+```
+
+```{r echo=FALSE}
+tissue_list <- list()
+file_name <- list()
+
+c = 1
+for (i in files) {
+  load(paste("./TMM_norm_filt_counts/",i, sep=""))
+  tissue_list[[i]] <- df
+  file_name[c] = i
+  c = c + 1
+}
+```
+
+
+```{r echo=FALSE}
+n = length(tissue_list)
+```
+
+```{r echo=FALSE}
+tissue_donor_count = matrix(, nrow=n, ncol=n)
+colnames(tissue_donor_count) = file_name
+rownames(tissue_donor_count) = file_name
+```
+
+```{r echo=FALSE}
+tissue_donor_proportion = matrix(, nrow=n, ncol=n)
+colnames(tissue_donor_proportion) = file_name
+rownames(tissue_donor_proportion) = file_name
+```
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    samples1 = i$samples
+    samples2 = j$samples
+    tissue_count = sum(samples1$SUBJID %in% samples2$SUBJID)
+    tissue_donor_count[row, col] = tissue_count
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+
+```
+
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    samples1 = i$samples
+    samples2 = j$samples
+    tissue_proportion = sum(samples1$SUBJID %in% samples2$SUBJID)/length(samples1$SUBJID)
+    tissue_donor_proportion[row, col] = tissue_proportion
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+
+```
+
+
+
+
+```{r echo=FALSE}
+shared_gene_count = matrix(, nrow=n, ncol=n)
+colnames(shared_gene_count) = file_name
+rownames(shared_gene_count) = file_name
+```
+
+```{r echo=FALSE}
+shared_gene_proportion = matrix(, nrow=n, ncol=n)
+colnames(shared_gene_proportion) = file_name
+rownames(shared_gene_proportion) = file_name
+```
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    genes1 = i$genes
+    genes2 = j$genes
+    gene_count = sum(genes1$gene_id %in% genes2$gene_id)
+    shared_gene_count[row, col] = gene_count
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+```
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    genes1 = i$genes
+    genes2 = j$genes
+    gene_proportion = sum(genes1$gene_id %in% genes2$gene_id)/length(genes1$gene_id)
+    shared_gene_proportion[row, col] = gene_proportion
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+```
+
+
+```{r echo=FALSE}
+#install.packages("pheatmap")
+library("pheatmap")
+```
+```{r , fig.width=20, fig.height=20, echo=FALSE}
+pheatmap(tissue_donor_count)
+```
+```{r fig.height=20, fig.width=20, echo=FALSE}
+pheatmap(tissue_donor_proportion)
+```
+```{r , fig.width=20, fig.height=20, echo=FALSE}
+pheatmap(shared_gene_count)
+```
+
+```{r , fig.width=20, fig.height=20, echo=FALSE}
+pheatmap(shared_gene_proportion)
+```
+
+
+
