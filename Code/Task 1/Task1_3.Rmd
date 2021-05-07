@@ -1,0 +1,385 @@
+---
+title: "Task 1 - Data Science Project"
+author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
+date: "1000555 & 1129446" 
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# Task Description 
+
+To explore and visualise the count and proportion of donor and gene overlap between all pairs of tissue samples.  
+
+To carry out this task and understand each of the data frames better, four matrices containing the following information can be created:  
+
+1. Overlapping donor count: matrix that represents the count of overlapping donors between all pairs of tissues. 
+2. Overlapping donor proportion: matrix that represents the proportion of overlapping donors between all pairs of tissues. 
+3. Shared gene count: matrix that represents the count of overlapping genes between all pairs of tissues. 
+4. Shared gene proportion: matrix that represents the proportion of overlapping genes between all pairs of tissues.  
+
+Each of the above matrices are visualized using heatmaps.
+
+
+
+```{r echo=FALSE}
+files <- list.files("~/CSL/TMM_norm_filt_counts")
+```
+
+```{r echo=FALSE}
+tissue_list <- list()
+file_name <- list()
+
+c = 1
+for (i in files) {
+  load(paste("./TMM_norm_filt_counts/",i, sep=""))
+  tissue_list[[i]] <- df
+  file_name[c] = i
+  c = c + 1
+}
+```
+
+
+```{r echo=FALSE}
+n = length(tissue_list)
+```
+
+```{r echo=FALSE}
+tissue_names = list()
+global_tissue_names = list()
+
+i = 1
+for (a in file_name) {
+  a = sub("TMM_filt_counts_","",a)
+  a = sub(".Rdata","",a)
+  tissue_names[[i]] = a
+  a = unlist(strsplit(a, split=' -', fixed=TRUE))[1]
+  global_tissue_names[[i]] = a
+  
+  i = i + 1
+}
+tissue_names = as.character(tissue_names)
+global_tissue_names = as.character(global_tissue_names)
+
+```
+
+
+
+```{r echo=FALSE}
+tissue_donor_count = matrix(, nrow=n, ncol=n)
+colnames(tissue_donor_count) = tissue_names
+rownames(tissue_donor_count) = tissue_names
+```
+
+```{r echo=FALSE}
+tissue_donor_proportion = matrix(, nrow=n, ncol=n)
+colnames(tissue_donor_proportion) = tissue_names
+rownames(tissue_donor_proportion) = tissue_names
+```
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    samples1 = i$samples
+    samples2 = j$samples
+    tissue_count = sum(samples1$SUBJID %in% samples2$SUBJID)
+    tissue_donor_count[row, col] = tissue_count
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+
+```
+
+
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    samples1 = i$samples
+    samples2 = j$samples
+    tissue_proportion = sum(samples1$SUBJID %in% samples2$SUBJID)/length(samples1$SUBJID)
+    tissue_donor_proportion[row, col] = tissue_proportion
+    
+    col = col + 1
+  }
+  
+  
+  row = row + 1
+}
+
+```
+
+
+
+
+```{r echo=FALSE}
+shared_gene_count = matrix(, nrow=n, ncol=n)
+colnames(shared_gene_count) = tissue_names
+rownames(shared_gene_count) = tissue_names
+```
+
+```{r echo=FALSE}
+shared_gene_proportion = matrix(, nrow=n, ncol=n)
+colnames(shared_gene_proportion) = tissue_names
+rownames(shared_gene_proportion) = tissue_names
+```
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    genes1 = i$genes
+    genes2 = j$genes
+    gene_count = sum(genes1$gene_id %in% genes2$gene_id)
+    shared_gene_count[row, col] = gene_count
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+```
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    genes1 = i$genes
+    genes2 = j$genes
+    gene_proportion = sum(genes1$gene_id %in% genes2$gene_id)/length(genes1$gene_id)
+    shared_gene_proportion[row, col] = gene_proportion
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+```
+
+```{r}
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+    #install.packages("BiocManager")
+
+#BiocManager::install("ComplexHeatmap")
+```
+
+```{r echo=FALSE}
+#install.packages("pheatmap")
+library("pheatmap")
+```
+
+## The count of overlapping donors between all pairs of tissue samples  
+
+The matrix 'tissue_donor_count' is created to tabulate the count of overlapping donors for all pairs of tissues. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
+
+The diagonal elements of the matrix give the total count of donors for each tissue. On the other hand, the non-diagonal elements give the total overlap of donors between two particular tissues. It is important to note that the count of overlapping donors between two tissues say Liver and Whole Blood is equal to the count of overlapping donors between Whole Blood and Liver. Hence, it is a symmetric matrix.  
+
+```{r , fig.width=20, fig.height=20, echo=FALSE}
+pheatmap(tissue_donor_count, main="Heatmap of Donor Overlap Counts in All Pairs of Tissues")
+```
+
+The above heatmap is a visual representation of the 'tissue_donor_count' matrix. It mirrors the matrix perfectly - the rows and columns represent all 54 tissues. With the help of the colour gradient (legend), it is easy to determine the maximum and minimum count of overlapping donors over all combinations of the tissues. Since each element in the ‘tissue_donor_count’ matrix is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most overlapping donors. 
+
+From this heatmap, Whole Blood and Muscle - Skeletal is one example of two tissues that have a high count of overlapping donors. On the other hand, Kidney - Medulla and Pancreas have an extremely low count of overlapping donors. In this visualisation, the diagonal stands out as it gives the total count of overlapping donors per tissue. Muscle - Skeletal is the tissue with the highest number of donors whereas Kidney - Medulla seems to have the lowest number of donors. 
+
+As for the clustering, this heatmap has clustered similar tissues close to each other in this visualisation. A portion of the bottom right quadrant (starting from Muscle - Skeletal row and column) is a cluster that has the most count of overlapping donors. The rest of the heatmap has clustered tissues with average to low count of overlapping donors. 
+
+## The proportion of overlapping donors between all pairs of tissue samples  
+
+In this task, the matrix 'tissue_donor_proportion' is created to tabulate the proportion of donors for all pairs of tissues. This is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names. 
+
+In this matrix, it can be observed that all diagonal elements will be equal to 1 since those cells represent the total proportion of donors per tissue. However, this matrix is non-symmetrical because every non-diagonal element corresponds to a different row tissue and a different column tissue while calculating the proportion per element. Each of them take a value between 0 and 1 (0 and 1 included) and can also be expressed in terms of percentages. For example, the proportion of overlapping donors between Liver and Whole Blood is 0.241 i.e overlapping donors between Liver and Whole Blood donors make up 24.1% of Whole Blood donors.
+
+
+
+```{r fig.height=20, fig.width=20, echo=FALSE}
+pheatmap(tissue_donor_proportion, main="Heatmap of Donor Overlap Proportions in All Pairs of Tissues")
+```
+This heatmap gives a graphical representation of the ‘tissue_donor_proportion’, in which all rows and columns represent all 54 tissues. In this case, the colour gradient is useful to determine the proportion of each tissue to another tissue. Every cell that is coloured red denotes full proportion - which is the proportion of the tissue to itself. The other cells are likely to be values lesser than 1. 
+
+According to the heatmap, the proportion of overlapping donors between Whole Blood and Liver is very high. Subsequently, the proportion of overlapping donors between Cervix - Endocervix and Prostate is very low. 
+
+As for the clustering, there is an obvious cluster starting from the leftmost column up to the Esophagus - Muscularis column, which means that the donors of each column tissue make up high percentages of donors in almost all other tissues.  
+
+
+```{r echo=FALSE}
+library(ggplot2)
+
+```
+
+
+```{r echo=FALSE}
+proportion = tissue_donor_proportion[,"Whole Blood"]
+whole_blood_column_donor = data.frame(proportion)
+whole_blood_column_donor$subtissue = as.character(tissue_names)
+whole_blood_column_donor$tissue = as.character(global_tissue_names)
+
+proportion = tissue_donor_proportion["Whole Blood",]
+whole_blood_row_donor = data.frame(proportion)
+whole_blood_row_donor$subtissue = as.character(tissue_names)
+whole_blood_row_donor$tissue = as.character(global_tissue_names)
+
+
+```
+
+```{r echo=FALSE}
+proportion = shared_gene_proportion[,"Whole Blood"]
+whole_blood_column_gene = data.frame(proportion)
+whole_blood_column_gene$subtissue = as.character(tissue_names)
+whole_blood_column_gene$tissue = as.character(global_tissue_names)
+
+proportion = shared_gene_proportion["Whole Blood",]
+whole_blood_row_gene = data.frame(proportion)
+whole_blood_row_gene$subtissue = as.character(tissue_names)
+whole_blood_row_gene$tissue = as.character(global_tissue_names)
+
+
+```
+
+
+
+```{r echo=FALSE}
+#install.packages("RColorBrewer")                   # Install RColorBrewer package
+library(RColorBrewer)                            # Load RColorBrewer
+```
+
+
+
+```{r echo=FALSE}
+ggplot(data=whole_blood_column_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Donors of Whole Blood in all other Tissues ") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.2, 'cm')) +
+
+  geom_bar(stat="identity")
+
+```
+
+This bar plot visualises the proportion of overlapping donors of Whole Blood in all other tissues. This plot helps us identify that all donors of Cervix - Endocervix, Fallopian Tube, Kidney - Medulla are also donors of Whole Blood. 
+
+```{r echo=FALSE}
+ggplot(data=whole_blood_row_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Donors of all Tissues in Whole Blood") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.2, 'cm')) +
+
+  geom_bar(stat="identity")
+
+```
+
+This bar plot depicts the proportion of overlapping donors of all tissues in Whole Blood. Muscle - Skeletal has the highest proportion of overlapping donors with Whole Blood whereas, Kidney - Medulla has the least. This could probably be because of the overall count of Kidney - Medulla donors is very low. 
+
+## The count of shared genes between all pairs of tissue samples  
+
+The 'shared_gene_count' matrix records the count of shared genes across different pairs of tissues. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
+
+It is observed that the diagonal elements of this matrix give us the total count of genes for each tissue. The non-diagonal elements give us the count of shared genes between two tissues. For example, the count of shared genes between Liver and Whole Blood is 11124, which is equal to the count of shared genes between Whole Blood and Liver. Hence, this matrix is also symmetrical.  
+
+
+```{r , fig.width=20, fig.height=20, echo=FALSE}
+pheatmap(shared_gene_count, main="Heatmap of Gene Overlap Counts in All Pairs of Tissues")
+```
+This heatmap is a visual representation of the 'shared_gene_count' matrix, in which the rows and columns represent all 54 tissues. With the help of the colour gradient (legend), it is easy to determine the maximum and minimum count of shared genes over all combinations of the tissues. Since each element in the ‘shared_gene_count’ matrix is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most count of shared genes.
+
+From this heatmap, Brain - Cortex and Brain - Frontal Cortex (BA9)  is one example of two tissues that have a high count of shared genes. Additionally, Liver and Brain - Cerebellar is an example of a tissue pair that has an extremely low count of shared genes. The diagonal in the heatmap stands out since it denotes the total count of genes of a tissue. Testis is the tissue with the highest number of genes and Liver seems to have the lowest count of genes. 
+
+As for the clustering, this heatmap has clustered similar tissues close to each other in this visualisation, according to count of shared genes. The middle portion of this heatmap, coloured in shades of red and orange is a cluster that has a high to average count of shared genes. The rest of the heatmap has clustered tissues with low count of shared genes.
+
+## The proportion of shared genes between all pairs of tissue samples 
+
+The last matrix, 'shared_gene_proportion' records the proportion of shared genes between different pairs of tissues. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
+
+The diagonal elements of this matrix will all be equal to 1, as they represent the total proportion of genes per tissue. This matrix will also be non-symmetrical since each of the non-diagonal elements corresponds to a different row tissue and a different column tissue, while estimating the proportion. They can be expressed in a similar manner, just like the 'tissue_donor_proportion' matrix. For instance, the proportion of shared genes between Liver and Whole Blood is 0.856. In terms of percentage, overlapping genes between Liver and Whole Blood make up 85.6% of the total amount of genes found in Whole Blood.  
+
+
+```{r , fig.width=20, fig.height=20, echo=FALSE}
+pheatmap(shared_gene_proportion, main="Heatmap of Gene Overlap Proportions in All Pairs of Tissues")
+```
+This heatmap gives a graphical representation of the ‘shared_gene_proportion’, in which all rows and columns represent all 54 tissues. In this case, the colour gradient is useful to determine the proportion of each tissue to another tissue. Every cell that is coloured red denotes full proportion - which is the proportion of genes of the tissue to itself. The other cells are likely to be values lesser than 1. 
+
+According to the heatmap, the proportion of shared genes between Stomach and Bladder is very high. Subsequently, the proportion of shared genes between Testis and Liver  is very low. 
+
+Coming to clustering, all similar gene proportions have been clustered together. Majority of the heatmap is shades of red - which signifies that those column tissues make up a large proportion of their corresponding row tissues. Similarly, the portion of the bottom right quadrant, shaded in blue, denotes that the column tissues make up a small proportion of their corresponding row tissues.  
+
+
+```{r echo=FALSE}
+ggplot(data=whole_blood_column_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Genes of Whole Blood in all other Tissues ") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.2, 'cm')) +
+
+  geom_bar(stat="identity")
+
+```
+
+The above bar plot is a visualisation of all overlapping genes of Whole Blood in other tissues. Here, we observe that the proportion of shared genes in Whole Blood, that are also found in Testis is the least. Whole Blood and Cervix - Ectocervix has the highest proportion of shared genes in this case. 
+
+
+```{r echo=FALSE}
+ggplot(data=whole_blood_row_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Genes of All Tissues in Whole Blood") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.2, 'cm')) +
+
+  geom_bar(stat="identity")
+
+```
+
+This bar plot shows the proportion of shared genes of all tissues in Whole Blood. The Spleen has the highest proportion of shared genes, which are also found in Whole Blood. The proportion of shared genes in Liver and Whole Blood is the least amongst the lot. 
+
+```{r echo=FALSE}
+whole_blood_column_donor = whole_blood_column_donor[order(-whole_blood_column_donor$proportion), ]
+whole_blood_column_donor_top10 = whole_blood_column_donor[!(whole_blood_column_donor$subtissue=="Whole Blood"),][1:10,]
+
+
+whole_blood_column_gene = whole_blood_column_gene[order(-whole_blood_column_gene$proportion), ]
+whole_blood_column_gene_top10 = whole_blood_column_gene[!(whole_blood_column_gene$subtissue=="Whole Blood"),][1:10,]
+
+top_tissues = Reduce(intersect,list(whole_blood_column_donor_top10$subtissue, whole_blood_column_gene_top10$subtissue))
+
+
+```
+
+2 lists were created
+1. List of top tissues sharing with blood most of its donors
+2. List of top tissues sharing with blood most of its genes
+Tissues that appear in both lists are:
+
+```{r echo=FALSE}
+top_tissues
+```
+
+# Conclusion
+
+From the various bar plots above, there are many tissues like the Spleen and Ectocervix that share a high proportion of genes with Whole Blood. It can be deduced that the Spleen and Ectocervix have similar characteristics of Whole Blood.
+
+This task projects similarities among many sets of tissues, based on the count of donors and genes. It helps us identify which tissues behave in the same manner, based on these two factors.
+
+
+
+
+add: row clustering and col clustering meanings
