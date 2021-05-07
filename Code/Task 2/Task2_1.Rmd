@@ -57,17 +57,24 @@ colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
 
 
 
+
 ```{r echo=FALSE}
 correlation_list <- list()
-tissue_of_interest = list()
+
+blood_shared_genes = c()
 
 j = 1
 for (df_other in tissue_list) {
+  if (tissue_names[j]=="Whole Blood") {
+    next
+  }
   rownames(df_other$cpm_tmm) <- df_other$genes$gene_id 
   colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID 
     
   shared_genes <- df_blood$genes$gene_id[df_blood$genes$gene_id%in%df_other$genes$gene_id] 
   shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
+  
+  blood_shared_genes = c(blood_shared_genes, shared_genes)
     
   exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
   exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
@@ -80,9 +87,14 @@ for (df_other in tissue_list) {
   } 
   colnames(cor_genes_other)[colnames(cor_genes_other) == "r"] <- paste("r","TMM_filt_counts_Whole Blood.Rdata", file_name[j], sep=" ")
   correlation_list[[j]] <- cor_genes_other
-  tissue_of_interest[[j]] = "Whole Blood"
   j = j + 1
 }
+
+
+```
+
+```{r}
+blood_shared_genes_unique = unique(blood_shared_genes)
 ```
 
 
@@ -90,10 +102,8 @@ for (df_other in tissue_list) {
 
 
 
-
 ```{r echo=FALSE}
-tissue_of_interest = as.character(tissue_of_interest)
-corr_stats_list = data.frame(tissue_of_interest=tissue_of_interest, tissueX=tissue_names, global_tissue = global_tissue_names, median=NA, median_abs=NA, mean=NA, mean_abs=NA)
+corr_stats_list = data.frame(tissue_of_interest="Whole Blood", tissueX=tissue_names, global_tissue = global_tissue_names, median=NA, median_abs=NA, mean=NA, mean_abs=NA)
 
 for (i in 1:length(correlation_list)) {
   curr_df = correlation_list[[i]]
@@ -109,6 +119,9 @@ for (i in 1:length(correlation_list)) {
 }
 ```
 
+```{r}
+corr_stats_list = corr_stats_list[!(corr_stats_list$tissueX=="Whole Blood"),]
+```
 
 
 ```{r echo=FALSE}
@@ -125,7 +138,7 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global
         legend.key.size = unit(0.2, 'cm')) +
 
   geom_bar(stat="identity") +
-  geom_text(aes(label = round(mean, 3)), size = 1, angle=90, hjust=-0.5)
+  geom_text(aes(label = round(mean, 3)), size = 2, angle=90, hjust=-0.5)
 
 ```
 
@@ -139,7 +152,7 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = gl
         legend.key.size = unit(0.2, 'cm')) +
 
   geom_bar(stat="identity") +
-  geom_text(aes(label = round(median, 3)), size = 1, angle=90, hjust=-0.5)
+  geom_text(aes(label = round(median, 3)), size = 2, angle=90, hjust=-0.5)
 
 ```
 
@@ -154,7 +167,7 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill 
         legend.key.size = unit(0.2, 'cm')) +
 
   geom_bar(stat="identity") +
-  geom_text(aes(label = round(mean_abs, 3)), size = 1, angle=90, hjust=-0.5)
+  geom_text(aes(label = round(mean_abs, 3)), size = 2, angle=90, hjust=-0.5)
 
 ```
 ```{r echo=FALSE}
@@ -167,6 +180,62 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, f
         legend.key.size = unit(0.2, 'cm')) +
 
   geom_bar(stat="identity") +
-  geom_text(aes(label = round(median_abs, 3)), size = 1, angle=90, hjust=-0.5)
+  geom_text(aes(label = round(median_abs, 3)), size = 2, angle=90, hjust=-0.5)
 
 ```
+```{r}
+mean_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
+```
+
+
+```{r}
+all_mean = c()
+for (gene in blood_shared_genes_unique) {
+  gene_cor_list = c()
+  for (i in 1:length(correlation_list)) {
+  curr_df = correlation_list[[i]]
+  cor = curr_df[curr_df$gene_id==gene, 2]
+  gene_cor_list = c(gene_cor_list, cor)
+  }
+  mean_cor = mean(gene_cor_list)
+  all_mean = c(all_mean, mean_cor)
+}
+
+mean_correlation_gene$mean = all_mean
+
+```
+
+```{r}
+ggplot(data = mean_correlation_gene, aes(x = mean)) + 
+  ggtitle("Mean Correlation of Each Blood Gene with All Tissues") + 
+  geom_density()
+```
+```{r}
+mean_abs_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
+```
+
+
+```{r}
+all_mean = c()
+for (gene in blood_shared_genes_unique) {
+  gene_cor_list = c()
+  for (i in 1:length(correlation_list)) {
+  curr_df = correlation_list[[i]]
+  cor = curr_df[curr_df$gene_id==gene, 2]
+  cor = abs(cor)
+  gene_cor_list = c(gene_cor_list, cor)
+  }
+  mean_cor = mean(gene_cor_list)
+  all_mean = c(all_mean, mean_cor)
+}
+
+mean_abs_correlation_gene$mean = all_mean
+
+```
+
+```{r}
+ggplot(data = mean_abs_correlation_gene, aes(x = mean)) + 
+  ggtitle("Mean Absolute Correlation of Each Blood Gene with All Tissues") + 
+  geom_density()
+```
+
