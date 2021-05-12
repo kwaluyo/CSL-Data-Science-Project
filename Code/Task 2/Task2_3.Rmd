@@ -170,6 +170,7 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill 
   geom_text(aes(label = round(mean_abs, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
 ```{r echo=FALSE}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, fill = global_tissue)) +
   ggtitle("Median of Absolute Correlation of Whole Blood and Tissue X in Their Shared Genes") + 
@@ -183,6 +184,7 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, f
   geom_text(aes(label = round(median_abs, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
 ```{r}
 mean_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
 ```
@@ -282,6 +284,21 @@ rank_df$avg_rank = (rank_df$rank_donor + rank_df$rank_gene + rank_df$rank_corr)/
 ```{r}
 rank_df_sorted = rank_df[order(rank_df$avg_rank), ]
 head(rank_df_sorted)
+```
+
+
+```{r echo=FALSE}
+ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill = subtissue)) +
+  ggtitle("Ranking of Tissues in Similarities with Whole Blood (Average Ranking from Parameter: Donor, Gene, Correlation)") + 
+  xlab("Sub-Tissues") + ylab("Rank") +
+  theme(title = element_text(size=9),
+        axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.2, 'cm')) +
+
+  geom_bar(stat="identity", show.legend=FALSE) +
+  geom_text(aes(label = round(avg_rank, 2)), size = 2, angle=90, hjust=-0.1)
+
 ```
 
 
