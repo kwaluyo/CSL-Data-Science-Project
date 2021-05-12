@@ -25,7 +25,7 @@ Each of the above matrices are visualized using heatmaps.
 
 
 ```{r echo=FALSE}
-files <- list.files("~/TMM_norm_filt_counts")
+files <- list.files("~/CSL/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -373,10 +373,16 @@ ggplot(data=whole_blood_row_gene, aes(x=reorder(subtissue,-proportion), y=propor
 This bar plot shows the proportion of shared genes of Whole Blood with all other tissues. The Spleen has the highest proportion of shared genes, which are also found in Whole Blood. The proportion of shared genes in Liver and Whole Blood is the least amongst the lot. 
 
 ```{r echo=FALSE}
-whole_blood_column_donor = whole_blood_column_donor[order(-whole_blood_column_donor$proportion), ]
+whole_blood_row_donor = whole_blood_row_donor[order(-whole_blood_row_donor$proportion), ]
+whole_blood_row_donor_top10 = whole_blood_row_donor[1:10,]
 
-whole_blood_column_gene = whole_blood_column_gene[order(-whole_blood_column_gene$proportion), ]
-whole_blood_column_gene_top10 = whole_blood_column_gene[1:10,]
+whole_blood_row_gene = whole_blood_row_gene[order(-whole_blood_row_gene$proportion), ]
+whole_blood_row_gene_top10 = whole_blood_row_gene[1:10,]
+```
+
+```{r}
+save(whole_blood_row_donor, file="whole_blood_row_donor.Rdata")
+save(whole_blood_row_gene, file="whole_blood_row_gene.Rdata")
 ```
 
 Furthermore, to investigate the tissues that are the most similar to Whole Blood, we create the following lists:  
@@ -388,7 +394,7 @@ In short, we summarise the 'Proportion of Overlapping Donors of all Tissues with
 
 The tissues that appear in both lists are as follows:
 ```{r echo=FALSE}
-top_tissues = Reduce(intersect,list(whole_blood_column_donor_top10$subtissue, whole_blood_column_gene_top10$subtissue))
+top_tissues = Reduce(intersect,list(whole_blood_row_donor_top10$subtissue, whole_blood_row_gene_top10$subtissue))
 top_tissues
 ```
 The tissues listed above are found to be the most similar to blood based on overlapping donors and shared genes, amongst all 54 tissues. This gives us a good starting point for choosing which tissues we can use for our initial analysis. 
