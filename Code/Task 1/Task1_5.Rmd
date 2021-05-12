@@ -381,6 +381,11 @@ whole_blood_row_gene_top10 = whole_blood_row_gene[1:10,]
 ```
 
 ```{r}
+whole_blood_row_donor_top10
+whole_blood_row_gene_top10
+```
+
+```{r echo=FALSE}
 save(whole_blood_row_donor, file="whole_blood_row_donor.Rdata")
 save(whole_blood_row_gene, file="whole_blood_row_gene.Rdata")
 ```
