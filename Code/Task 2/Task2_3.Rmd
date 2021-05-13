@@ -2,7 +2,9 @@
 title: "Task 2 - Data Science Project"
 author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
 date: "1000555 & 1129446"
-output: word_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -89,7 +91,7 @@ for (df_other in tissue_list) {
 
 ```
 
-```{r}
+```{r echo=FALSE}
 blood_shared_genes_unique = unique(blood_shared_genes)
 ```
 
@@ -112,7 +114,7 @@ for (i in 1:length(correlation_list)) {
 }
 ```
 
-```{r}
+```{r echo=FALSE}
 corr_stats_list = corr_stats_list[!(corr_stats_list$tissueX=="Whole Blood"),]
 ```
 
@@ -344,5 +346,3 @@ Since ranks have been the most consistent unit across all measures so far, the r
 This task explores how shared genes across all tissues are correlated to Whole Blood. Each correlation value measured in this task helps us understand the kind of relationship every tissue shares with Whole Blood, based on the genes they share. A strong correlation is essential for analysis.
 
 It also gives us a good starting point for choosing the right tissues to analyse and apply models to. 
-
-
