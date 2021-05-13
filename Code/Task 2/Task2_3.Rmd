@@ -1,19 +1,17 @@
 ---
-title: "Untitled"
-output: pdf_document
+title: "Task 2 - Data Science Project"
+author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
+date: "1000555 & 1129446"
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-
- 
 
 ```{r echo=FALSE}
-files <- list.files("~/CSL/TMM_norm_filt_counts")
+files <- list.files("~/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -54,8 +52,6 @@ df_blood = df
 rownames(df_blood$cpm_tmm) <- df_blood$genes$gene_id 
 colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
 ```
-
-
 
 
 ```{r echo=FALSE}
@@ -99,9 +95,6 @@ blood_shared_genes_unique = unique(blood_shared_genes)
 
 
 
-
-
-
 ```{r echo=FALSE}
 corr_stats_list = data.frame(tissue_of_interest="Whole Blood", tissueX=tissue_names, global_tissue = global_tissue_names, median=NA, median_abs=NA, mean=NA, mean_abs=NA)
 
@@ -123,6 +116,16 @@ for (i in 1:length(correlation_list)) {
 corr_stats_list = corr_stats_list[!(corr_stats_list$tissueX=="Whole Blood"),]
 ```
 
+#Task Description
+
+This task involves the exploration of correlation between gene expressions in tissues with the expression of the same genes in Whole Blood and their relationship.
+Additionally, the correlation of each gene found in Whole Blood with each tissue is also explored.  
+
+## Various measures of correlation of a particular tissue and Whole Blood, based on their shared genes 
+
+To go about the first part of this task, we first create a vector that contains the correlation for each gene expressed in the tissues and Whole Blood. Mean and Median of the correlation for each pair is found to summarise the measure of correlation across all gene expressions. We also calculate plot the Absolute Mean and Absolute Median of correlations across the tissues and Whole Blood to understand the significance a bit better. 
+
+The mean and median correlation plots are as follows: 
 
 ```{r echo=FALSE}
 library(ggplot2)
@@ -131,7 +134,7 @@ library(ggplot2)
 
 ```{r echo=FALSE}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global_tissue)) +
-  ggtitle("Mean Correlation of Whole Blood and Tissue X in Their Shared Genes") + 
+  ggtitle("Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
   theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
         legend.text = element_text(size=5),
@@ -141,11 +144,11 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global
   geom_text(aes(label = round(mean, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
-
+The above plot captures the mean correlation between a particular tissue and Whole Blood, based on the shared genes.  
 
 ```{r echo=FALSE}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = global_tissue)) +
-  ggtitle("Median Correlation of Whole Blood and Tissue X in Their Shared Genes") + 
+  ggtitle("Median Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
   theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
         legend.text = element_text(size=5),
@@ -155,11 +158,19 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = gl
   geom_text(aes(label = round(median, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+The plot above captures the median correlation between particular tissue and Whole Blood, based on their shared genes. 
 
+
+The mean correlation and median correlation can help us determine the how high or low the count of a particular shared gene in a tissue will be, when the count of the same gene is known in Whole Blood. It must be considered as an just an approximation of how high or low the count will be, and not as a predicting factor.
+
+According to the two plots, we see that Spleen has the highest mean and median correlations and on the other hand, Cells - Cultured Fibroblasts have the least mean and median correlations with Whole Blood. It is also observed that all the individual tissues captured under 'Brain' have similar mean and median correlation values. Overall we can conclude that in this case, mean correlation and median correlation behave similarly. A closer look at each value of mean and median correlation values for each tissue suggests that they are roughly equal to each other. 
+
+
+Now considering the absolute correlation values, the following plots are produced: 
 
 ```{r echo=FALSE}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill = global_tissue)) +
-  ggtitle("Mean of Absolute Correlation of Whole Blood and Tissue X in Their Shared Genes") + 
+  ggtitle("Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
   theme(title = element_text(size=9),
         axis.text.x = element_text(hjust=1, angle = 90, size=5),
@@ -170,10 +181,12 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill 
   geom_text(aes(label = round(mean_abs, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+The above plot represents the mean of absolute correlation between a tissue and Whole Blood, based on their shared genes. 
+
 
 ```{r echo=FALSE}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, fill = global_tissue)) +
-  ggtitle("Median of Absolute Correlation of Whole Blood and Tissue X in Their Shared Genes") + 
+  ggtitle("Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
   theme(title = element_text(size=9),
         axis.text.x = element_text(hjust=1, angle = 90, size=5),
@@ -184,13 +197,20 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, f
   geom_text(aes(label = round(median_abs, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+The above plot captures the median of absolute correlation between a tissue and Whole Blood, based on their shared genes.
 
-```{r}
+In the context of this task, the absolute correlation is a measure that denotes the strength of the relationship between the tissue and Whole Blood, based on their shared genes. The direction of the relationship between the two is not accounted for while using absolute correlation. For each of the shared genes, we then take the absolute correlation and then continue to aggregate it using mean and median to get a summarised picture. 
+
+From the two plots, we can see that Kidney - Medulla has the strongest relationship with Whole Blood, based on their shared genes. Furthermore, Cells - Cultured Fibroblasts share the weakest relationship with Whole Blood. All specific tissues that fall under the 'Brain' category have roughly the same strength of relationship between Whole Blood. This can lead us to further conclude that the of mean and median of absolute correlation are roughly are the same values for each tissue. 
+
+## Various measures of correlation between each gene found in Whole Blood with all other tissues
+
+```{r echo=FALSE}
 mean_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
 ```
 
 
-```{r}
+```{r echo=FALSE}
 all_mean = c()
 for (gene in blood_shared_genes_unique) {
   gene_cor_list = c()
@@ -207,17 +227,21 @@ mean_correlation_gene$mean = all_mean
 
 ```
 
-```{r}
+The second part of the task explores how each gene found in Whole Blood is correlated to the same gene found other Tissues. For this task, we will utilise mean correlation and median correlation to summarise the overall picture. Density plots are also to graphically represent the findings. 
+
+```{r echo=FALSE}
 ggplot(data = mean_correlation_gene, aes(x = mean)) + 
-  ggtitle("Mean Correlation of Each Blood Gene with All Tissues") + 
+  ggtitle("Mean Correlation of Each Gene of Whole Blood with all other Tissues") + 
   geom_density()
 ```
-```{r}
+The above density plot represents the distribution of the mean correlation of all genes found in Whole Blood with all other tissues. The peak observed in this density plot suggests that the overall mean correlation is positive. While some genes of some tissues may be highly correlated with the genes of Whole Blood, not all of them are.  
+
+```{r echo=FALSE}
 mean_abs_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
 ```
 
 
-```{r}
+```{r echo=FALSE}
 all_mean = c()
 for (gene in blood_shared_genes_unique) {
   gene_cor_list = c()
@@ -235,53 +259,66 @@ mean_abs_correlation_gene$mean = all_mean
 
 ```
 
-```{r}
+```{r echo=FALSE}
 ggplot(data = mean_abs_correlation_gene, aes(x = mean)) + 
-  ggtitle("Mean Absolute Correlation of Each Blood Gene with All Tissues") + 
+  ggtitle("Mean Absolute Correlation of Each Gene of Whole Blood with all other Tissues") + 
   geom_density()
 ```
-```{r}
+
+
+
+Since this plot considers absolute correlation of each gene in Whole Blood with the same gene found in all other tissues, it starts at zero. Majority of genes in other tissues have a correlation of about 0.10, but a very small number of them have a strong correlation.
+
+
+```{r echo=FALSE}
 save(mean_correlation_gene, file="mean_correlation_gene.Rdata")
 save(mean_abs_correlation_gene, file="mean_abs_correlation_gene.Rdata")
 ```
 
-```{r}
+```{r echo=FALSE}
 load("./whole_blood_row_donor.Rdata")
 load("./whole_blood_row_gene.Rdata")
 ```
 
-```{r}
+
+```{r echo=FALSE}
 rank_default = c(1:53)
 ```
 
-```{r}
+```{r echo=FALSE}
 corr_data = data.frame(subtissue = corr_stats_list$tissueX, mean_corr = corr_stats_list$mean)
 corr_data = corr_data[order(-corr_data$mean_corr), ]
 corr_data$rank_corr = rank_default
 ```
 
 
-```{r}
+```{r echo=FALSE}
 rank_donor_df = data.frame(subtissue = whole_blood_row_donor$subtissue, proportion_donor = whole_blood_row_donor$proportion, rank_donor=rank_default)
 
 rank_gene_df = data.frame(subtissue = whole_blood_row_gene$subtissue, proportion_gene = whole_blood_row_gene$proportion, rank_gene=rank_default)
 ```
 
-```{r}
+```{r message=FALSE}
 #install.packages("tidyft")
 library("tidyft")
 ```
 
-```{r}
+```{r echo=FALSE}
 rank_df = inner_join(rank_donor_df, rank_gene_df, by="subtissue")
 rank_df = inner_join(rank_df, corr_data, by="subtissue")
 ```
 
-```{r}
+```{r echo=FALSE}
 rank_df$avg_rank = (rank_df$rank_donor + rank_df$rank_gene + rank_df$rank_corr)/3
 ```
 
-```{r}
+## Ranking tissues based on various measures
+
+The final part of the task involves ranking tissues based on three different measures: proportion of overlapping donors, proportion of shared genes and correlation. The rank per tissue per measure is averaged out to give us the final rank it holds. 
+
+The following list and bar plot represent the top tissues with the highest proportion of overlapping donors, proportion of shared genes and correlation. These are the best tissues to be chosen across all measures:
+
+```{r echo=FALSE}
 rank_df_sorted = rank_df[order(rank_df$avg_rank), ]
 head(rank_df_sorted)
 ```
@@ -289,7 +326,7 @@ head(rank_df_sorted)
 
 ```{r echo=FALSE}
 ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill = subtissue)) +
-  ggtitle("Ranking of Tissues in Similarities with Whole Blood (Average Ranking from Parameter: Donor, Gene, Correlation)") + 
+  ggtitle("Overall Ranking of Tissues across all Measures") + 
   xlab("Sub-Tissues") + ylab("Rank") +
   theme(title = element_text(size=9),
         axis.text.x = element_text(hjust=1, angle = 90, size=5),
@@ -300,5 +337,12 @@ ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill
   geom_text(aes(label = round(avg_rank, 2)), size = 2, angle=90, hjust=-0.1)
 
 ```
+Since ranks have been the most consistent unit across all measures so far, the ranking computation carried out can help with the selection of the best tissue across all measures. 
+
+#Conclusion 
+
+This task explores how shared genes across all tissues are correlated to Whole Blood. Each correlation value measured in this task helps us understand the kind of relationship every tissue shares with Whole Blood, based on the genes they share. A strong correlation is essential for analysis.
+
+It also gives us a good starting point for choosing the right tissues to analyse and apply models to. 
 
 
