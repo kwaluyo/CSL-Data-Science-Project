@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r echo=FALSE}
-files <- list.files("~/TMM_norm_filt_counts")
+files <- list.files("~/CSL/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -138,9 +138,10 @@ library(ggplot2)
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global_tissue)) +
   ggtitle("Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
-  theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=5),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity") +
   geom_text(aes(label = round(mean, 3)), size = 2, angle=90, hjust=-0.1)
@@ -152,9 +153,10 @@ The above plot captures the mean correlation between a particular tissue and Who
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = global_tissue)) +
   ggtitle("Median Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
-  theme(axis.text.x = element_text(hjust=1, angle = 90, size=5),
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=5),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity") +
   geom_text(aes(label = round(median, 3)), size = 2, angle=90, hjust=-0.1)
@@ -175,9 +177,10 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill 
   ggtitle("Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
   theme(title = element_text(size=9),
-        axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        axis.text.x = element_text(hjust=1, angle = 30, size=5),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity") +
   geom_text(aes(label = round(mean_abs, 3)), size = 2, angle=90, hjust=-0.1)
@@ -191,9 +194,10 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, f
   ggtitle("Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
   theme(title = element_text(size=9),
-        axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        axis.text.x = element_text(hjust=1, angle = 30, size=5),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity") +
   geom_text(aes(label = round(median_abs, 3)), size = 2, angle=90, hjust=-0.1)
@@ -331,9 +335,10 @@ ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill
   ggtitle("Overall Ranking of Tissues across all Measures") + 
   xlab("Sub-Tissues") + ylab("Rank") +
   theme(title = element_text(size=9),
-        axis.text.x = element_text(hjust=1, angle = 90, size=5),
+        axis.text.x = element_text(hjust=1, angle = 30, size=5),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity", show.legend=FALSE) +
   geom_text(aes(label = round(avg_rank, 2)), size = 2, angle=90, hjust=-0.1)
