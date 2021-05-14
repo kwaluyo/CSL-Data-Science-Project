@@ -27,7 +27,8 @@ Additionally, bar plots are produced to understand the proportion of overlapping
 
 
 ```{r echo=FALSE}
-files <- list.files("~/TMM_norm_filt_counts")
+#files <- list.files("~/TMM_norm_filt_counts")
+files <- list.files("~/CSL/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -266,9 +267,10 @@ library(RColorBrewer)                            # Load RColorBrewer
 ggplot(data=whole_blood_column_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Donors of all Tissues with Whole Blood") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
-  theme(axis.text.x = element_text(hjust=1, angle = 90, size=6),
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity", color="white") +
   geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
@@ -283,9 +285,10 @@ This bar plot visualises the proportion of overlapping donors of all Tissues wit
 ggplot(data=whole_blood_row_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Donors of Whole Blood with all other Tissues") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
-  theme(axis.text.x = element_text(hjust=1, angle = 90, size=6),
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity", color="white") +
   geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
@@ -338,13 +341,13 @@ Coming to clustering, all similar gene proportions have been clustered together 
 ggplot(data=whole_blood_column_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Genes of all Tissues with Whole Blood") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
-  theme(axis.text.x = element_text(hjust=1, angle = 90, size=6),
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
   geom_bar(stat="identity", color="white") +
   geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
-
 
 ```
 
@@ -355,11 +358,12 @@ The above bar plot is a visualisation of all overlapping genes of other Tissues 
 ggplot(data=whole_blood_row_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Genes of Whole Blood with all other Tissues") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
-  theme(axis.text.x = element_text(hjust=1, angle = 90, size=6),
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
         legend.text = element_text(size=5),
-        legend.key.size = unit(0.2, 'cm')) +
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
 
-  geom_bar(stat="identity", color="white")+
+  geom_bar(stat="identity", color="white") +
   geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
@@ -382,12 +386,12 @@ Furthermore, to investigate the tissues that are the most similar to Whole Blood
 1. List of the top 10 tissues that share most of its donors with Whole Blood 
 
 ```{r}
-whole_blood_row_donor_top10
+whole_blood_row_donor_top10[,c(1,3)]
 ```
 
 2. List of the top 10 tissues that share most of its genes with Whole Blood
 ```{r}
-whole_blood_row_gene_top10
+whole_blood_row_gene_top10[,c(1,3)]
 ```
 
 In short, we summarise the 'Proportion of Overlapping Donors of all Tissues with Whole Blood' and 'Proportion of Overlapping Genes of all Tissues with Whole Blood' barplots and concise them to a list. 
