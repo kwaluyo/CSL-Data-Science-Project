@@ -2,9 +2,10 @@
 title: "Task 2 - Data Science Project"
 author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
 date: "1000555 & 1129446"
-output: 
+output:
   pdf_document:
-    fig_caption: TRUE
+    fig_caption: yes
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -127,7 +128,7 @@ This task involves the exploration of pairwise correlation between each gene in 
 
 ## Correlation of various tissues and with Whole Blood, based on their shared genes 
 
-We first create a vector that contains the correlation for each gene expressed in the tissues and Whole Blood. Mean and Median of the correlation for each pair is found to summarise the measure of correlation across all gene expressions. We also calculate and plot the Absolute Mean and Absolute Median of correlations across the tissues and Whole Blood to understand the relationship between these a bit better. 
+We first create a vector that contains the pairwise correlation of gene x in blood with all other tissues. Mean and Median of the correlation for each tissue is found to summarise the measure of correlation across all gene expressions. We also calculate and plot the Absolute Mean and Absolute Median of correlations across the tissues and Whole Blood to understand the relationship between these a bit better. 
 
 The mean and median correlation plots are as follows: 
 
@@ -149,7 +150,12 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global
   geom_text(aes(label = round(mean, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
+
+
 Figure 1 captures the mean correlation between a particular tissue with Whole Blood, based on their shared genes.  
+
+
 
 ```{r figs2, echo=FALSE, fig.cap="\\label{fig:figs2}Median Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = global_tissue)) +
@@ -164,6 +170,9 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = gl
   geom_text(aes(label = round(median, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
+
+
 Figure 2 captures the median correlation between particular tissue and Whole Blood, based on their shared genes. 
 
 
@@ -190,7 +199,11 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill 
   geom_text(aes(label = round(mean_abs, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
+
+
 Figure 3 represents the mean of absolute correlation between a tissue and Whole Blood, based on their shared genes. 
+
 
 
 ```{r figs4, echo=FALSE, fig.cap="\\label{fig:figs4}Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
@@ -207,6 +220,9 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, f
   geom_text(aes(label = round(median_abs, 3)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
+
+
 Figure 4 captures the median of absolute correlation between a tissue and Whole Blood, based on their shared genes.
 
 In the context of this task, the absolute correlation is a measure that denotes the strength of the relationship between the tissue and Whole Blood, based on their shared genes. The direction of the relationship between the two is not accounted for while using absolute correlation. For each of the shared genes, we then take the absolute correlation and then continue to aggregate it using mean and median to get a summarised picture. 
@@ -244,6 +260,9 @@ ggplot(data = mean_correlation_gene, aes(x = mean)) +
   ggtitle("Mean Correlation of Each Gene of Whole Blood with all other Tissues") + 
   geom_density()
 ```
+
+
+
 Figure 5 represents the distribution of the mean correlation of all genes found in Whole Blood with all other tissues. The peak observed in this density plot suggests that the overall mean correlation is positive. While some genes of some tissues may be highly correlated with the genes of Whole Blood, not all of them are.  
 
 ```{r echo=FALSE}
@@ -348,6 +367,9 @@ ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill
   geom_text(aes(label = round(avg_rank, 2)), size = 2, angle=90, hjust=-0.1)
 
 ```
+
+
+
 Since ranks have been the most consistent unit across all measures so far, the ranking computation carried out can help with the selection of the best tissue across all measures. 
 
 # Conclusion 
