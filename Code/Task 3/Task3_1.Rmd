@@ -1,0 +1,106 @@
+---
+title: "Untitled"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo=FALSE}
+files <- list.files("~/CSL/TMM_norm_filt_counts")
+```
+
+```{r echo=FALSE}
+tissue_list <- list()
+file_name <- list()
+
+c = 1
+for (i in files) {
+  load(paste("./TMM_norm_filt_counts/",i, sep=""))
+  tissue_list[[i]] <- df
+  file_name[c] = i
+  c = c + 1
+}
+```
+
+```{r echo=FALSE}
+tissue_names = list()
+global_tissue_names = list()
+
+i = 1
+for (a in file_name) {
+  a = sub("TMM_filt_counts_","",a)
+  a = sub(".Rdata","",a)
+  tissue_names[[i]] = a
+  a = unlist(strsplit(a, split=' -', fixed=TRUE))[1]
+  global_tissue_names[[i]] = a
+  
+  i = i + 1
+}
+tissue_names = as.character(tissue_names)
+global_tissue_names = as.character(global_tissue_names)
+
+```
+
+```{r}
+prop_7_2_1 = data.frame(tissue=tissue_names, total=NA, train=NA, val=NA, test=NA)
+
+i = 1
+for (df in tissue_list) {
+  total = ncol(df$cpm_tmm)
+  train = round(0.7*total)
+  val = round(0.2*total)
+  test = total - train - val
+  
+  prop_7_2_1$total[i] = total
+  prop_7_2_1$train[i] = train
+  prop_7_2_1$val[i] = val
+  prop_7_2_1$test[i] = test
+  
+  i = i + 1
+
+}
+```
+
+```{r}
+prop_8_1_1 = data.frame(tissue=tissue_names, total=NA, train=NA, val=NA, test=NA)
+
+i = 1
+for (df in tissue_list) {
+  total = ncol(df$cpm_tmm)
+  train = round(0.8*total)
+  val = round(0.1*total)
+  test = total - train - val
+  
+  prop_8_1_1$total[i] = total
+  prop_8_1_1$train[i] = train
+  prop_8_1_1$val[i] = val
+  prop_8_1_1$test[i] = test
+  
+  i = i + 1
+
+}
+```
+
+```{r}
+prop_65_35_1 = data.frame(tissue=tissue_names, total=NA, train=NA, val=NA, test=NA)
+
+i = 1
+for (df in tissue_list) {
+  total = ncol(df$cpm_tmm)
+  train = round(0.65*total)
+  val = round(0.25*total)
+  test = total - train - val
+  
+  prop_65_35_1$total[i] = total
+  prop_65_35_1$train[i] = train
+  prop_65_35_1$val[i] = val
+  prop_65_35_1$test[i] = test
+  
+  i = i + 1
+
+}
+```
+
