@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r echo=FALSE}
 files <- list.files("~/CSL/TMM_norm_filt_counts")
+# files <- list.files("~/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -135,7 +136,7 @@ library(ggplot2)
 
 ```
 
-```{r figs1, echo=FALSE, fig.cap="\\label{fig:figs1}Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+```{r figs1, echo=FALSE, fig.cap="\\label{fig:figs1}Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes"}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global_tissue)) +
   ggtitle("Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
