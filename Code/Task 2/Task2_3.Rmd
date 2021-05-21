@@ -122,7 +122,7 @@ corr_stats_list = corr_stats_list[!(corr_stats_list$tissueX=="Whole Blood"),]
 
 # Task Description
 
-This task involves the exploration of pairwise correlation between each shared gene in whole blood's gene expressions with other tissues' gene expressions. Additionally, the correlation of each gene found in Whole Blood with each tissue is also explored. Finally, the tissues are ranked on its similarity with whole blood on multiple measures.
+This task involves the exploration of pairwise correlation between each gene in whole blood's gene expressions with the same gene in other tissues' gene expressions. From there, the statistics of correlations of all genes in each tissue are computed. Additionally, the statistics of correlations of each gene across all tissues are also explored. Finally, the tissues are ranked on its similarity with whole blood on multiple measures.
 
 ## Correlation of various tissues and with Whole Blood, based on their shared genes 
 
