@@ -253,6 +253,33 @@ exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects]
 ```
 
 ```{r}
+# Data
+
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+# NN Visualisation
+
+n = neuralnet(medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + lstat, 
+              data = data, 
+              hidden = c(10, 5), 
+              linear.output = F, 
+              lifesign = 'full', 
+              rep = 1)
+
+plot(n, 
+     col.hidden = 'darkgreen',
+     col.hidden.synapse = 'darkgreen',
+     show.weights = F,
+     information = F,
+     fill = 'lightblue')
+
+
+```
+
+```{r}
 
 ```
 
