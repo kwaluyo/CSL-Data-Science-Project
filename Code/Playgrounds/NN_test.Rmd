@@ -1,0 +1,261 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+
+```
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+```
+
+```{r}
+# Data
+
+data("BostonHousing")
+data = BostonHousing
+data %<>% mutate_if(is.factor, as.numeric)
+```
+
+```{r}
+# NN Visualisation
+
+n = neuralnet(medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + lstat, 
+              data = data, 
+              hidden = c(10, 5), 
+              linear.output = F, 
+              lifesign = 'full', 
+              rep = 1)
+
+plot(n, 
+     col.hidden = 'darkgreen',
+     col.hidden.synapse = 'darkgreen',
+     show.weights = F,
+     information = F,
+     fill = 'lightblue')
+
+
+```
+
+
+```{r}
+# Matrix
+
+data = as.matrix(data)
+dimnames(data) = NULL
+```
+
+```{r}
+# Partition
+
+set.seed(1234)
+ind = sample(2, nrow(data), replace = T, prob = c(0.7, 0.3))
+training = data[ind == 1, 1:13]
+test = data[ind == 2, 1:13]
+trainingtarget = data[ind == 1, 14]
+testtarget = data[ind == 2, 14]
+
+```
+
+```{r}
+# Normalize
+
+m = colMeans(training)
+s = apply(training, 2, sd)
+training = scale(training, center = m, scale = s)
+test = scale(test, center = m, scale = s)
+```
+
+```{r}
+# Create Model
+
+model = keras_model_sequential()
+model %>% layer_dense(units = 5, activation = 'relu', input_shape = c(13)) %>%
+          layer_dense(units = 1)
+```
+
+```{r}
+# Compile
+
+model %>% compile(loss = 'mse',
+                  optimizer = 'rmsprop',
+                  metrics = 'mae')
+
+```
+
+```{r}
+# Fit Model
+
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 100,
+      batch_size = 32,
+      validation_split = 0.2)
+```
+
+```{r}
+# Evaluate
+
+model %>% evaluate(test, testtarget)
+pred = model %>% predict(test)
+mean((testtarget-pred)^2)
+plot(testtarget, pred)
+```
+
+```{r}
+# Fine-tune Model
+
+model = keras_model_sequential()
+model %>% layer_dense(units = 10, activation = 'relu', input_shape = c(13)) %>%
+          layer_dense(units = 5, activation = 'relu') %>%
+          layer_dense(units = 1)
+summary(model)
+
+# Compile
+model %>% compile(loss = 'mse',
+                  optimizer = 'rmsprop',
+                  metrics = 'mae')
+
+# Fit Model
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 100,
+      batch_size = 32,
+      validation_split = 0.2)
+
+# Evaluate
+model %>% evaluate(test, testtarget)
+pred = model %>% predict(test)
+mean((testtarget-pred)^2)
+plot(testtarget, pred)
+```
+Train error
+Initially high but then drops below validation error 
+overfitting after the intersection point
+
+Improvement in the scatter plot
+
+
+```{r}
+# Fine-tune Model
+
+model = keras_model_sequential()
+model %>% layer_dense(units = 100, activation = 'relu', input_shape = c(13)) %>%
+          layer_dropout(rate = 0.4) %>%
+          # dropout -> to avoid overfitting -> during the training, 40% of the                  neurons are dropped to 0, they are not used 
+  
+          layer_dense(units = 50, activation = 'relu') %>%
+          layer_dropout(rate = 0.3) %>%
+  
+          layer_dense(units = 20, activation = 'relu') %>%
+          layer_dropout(rate = 0.2) %>%
+  
+          layer_dense(units = 1)
+summary(model)
+
+# Compile
+model %>% compile(loss = 'mse',
+                  optimizer = 'rmsprop',
+                  metrics = 'mae')
+
+# Fit Model
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 100,
+      batch_size = 32,
+      validation_split = 0.2)
+
+# Evaluate
+model %>% evaluate(test, testtarget)
+pred = model %>% predict(test)
+mean((testtarget-pred)^2)
+plot(testtarget, pred)
+```
+The green line is always below the blue line -> no overfitting
+
+```{r}
+# Fine-tune Model
+
+model = keras_model_sequential()
+model %>% layer_dense(units = 100, activation = 'relu', input_shape = c(13)) %>%
+          layer_dropout(rate = 0.4) %>%
+          # dropout -> to avoid overfitting -> during the training, 40% of the                  neurons are dropped to 0, they are not used 
+  
+          layer_dense(units = 50, activation = 'relu') %>%
+          layer_dropout(rate = 0.3) %>%
+  
+          layer_dense(units = 20, activation = 'relu') %>%
+          layer_dropout(rate = 0.2) %>%
+  
+          layer_dense(units = 1)
+summary(model)
+
+# Compile
+model %>% compile(loss = 'mse',
+                  optimizer = optimizer_rmsprop(lr = 0.05),
+                  metrics = 'mae')
+
+# Fit Model
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 100,
+      batch_size = 32,
+      validation_split = 0.2)
+
+# Evaluate
+model %>% evaluate(test, testtarget)
+pred = model %>% predict(test)
+mean((testtarget-pred)^2)
+plot(testtarget, pred)
+```
+More fluctuation
+Higher loss
+Need to tune the learning rate
+
+
+
+
+```{r}
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Whole Blood.Rdata"))
+df_blood = df
+rownames(df_blood$cpm_tmm) <- df_blood$genes$gene_id 
+colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
+
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Lung.Rdata"))
+df_other = df
+rownames(df_other$cpm_tmm) <- df_other$genes$gene_id 
+colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID
+
+shared_genes <- df_blood$genes$gene_id[df_blood$genes$gene_id%in%df_other$genes$gene_id] 
+  shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
+    
+exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
+exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
+```
+
+```{r}
+
+```
+
+
+
+
