@@ -35,38 +35,30 @@ colnames(exp_other_t) <- paste0("resp_", colnames(exp_other_t))
 ```
 
 ```{r}
-exp_combined = cbind(exp_blood_t, exp_other_t)
+NUM_GENE = 50
+exp_combined = cbind(exp_blood_t[,1:NUM_GENE], exp_other_t[,1:NUM_GENE])
 ```
 
 ```{r}
-x <- paste(c(colnames(exp_blood_t[,1:20])),collapse="+")
-y <- paste(c(colnames(exp_other_t[,1:20])),collapse="+")
+x <- paste(c(colnames(exp_blood_t[,1:NUM_GENE])),collapse="+")
+y <- paste(c(colnames(exp_other_t[,1:NUM_GENE])),collapse="+")
 
 f <- paste(c(y, "~", x),collapse="")
 ```
 
 ```{r}
-try = exp_combined[1:30,]
+f
 ```
 
-```{r}
-n = neuralnet(f, 
-              data = try, 
-              hidden = c(10, 5), 
-              linear.output = F, 
-              lifesign = 'full', 
-              rep = 1)
-```
-```{r}
-# NN Visualisation
 
-plot(n, 
-     col.hidden = 'darkgreen',
-     col.hidden.synapse = 'darkgreen',
-     show.weights = F,
-     information = F,
-     fill = 'lightblue')
+
+
+
+```{r}
+try = exp_combined
 ```
+
+
 ```{r}
 # Matrix
 
@@ -77,32 +69,33 @@ dimnames(data) = NULL
 ```{r}
 # Partition
 
-n = ncol(data)
+
 
 set.seed(321)
 ind = sample(2, nrow(data), replace = T, prob = c(0.7, 0.3))
-training = data[ind == 1, 1:n/2]
-test = data[ind == 2, 1:n/2]
-trainingtarget = data[ind == 1, (n/2+1):n]
-testtarget = data[ind == 2, (n/2+1):n]
+training = data[ind == 1, 1:NUM_GENE]
+test = data[ind == 2, 1:NUM_GENE]
+
+trainingtarget = data[ind == 1, (NUM_GENE+1):(NUM_GENE*2)]
+testtarget = data[ind == 2, (NUM_GENE+1):(NUM_GENE*2)]
 
 ```
 
 ```{r}
 # Normalize
 
-m = colMeans(training)
-s = apply(training, 2, sd)
-training = scale(training, center = m, scale = s)
-test = scale(test, center = m, scale = s)
+#m = colMeans(training)
+#s = apply(training, 2, sd)
+#training = scale(training, center = m, scale = s)
+#test = scale(test, center = m, scale = s)
 ```
 
 ```{r}
 # Create Model
 
 model = keras_model_sequential()
-model %>% layer_dense(units = 5, activation = 'relu', input_shape = c(20)) %>%
-          layer_dense(units = 20)
+model %>% layer_dense(units = 5, activation = 'relu', input_shape = c(NUM_GENE)) %>%
+          layer_dense(units = NUM_GENE)
 ```
 
 ```{r}
@@ -120,13 +113,17 @@ model %>% compile(loss = 'mse',
 mymodel = model %>% 
   fit(training,
       trainingtarget,
-      epochs = 2,
+      epochs = 100,
       batch_size = 32,
       validation_split = 0.2)
 ```
 
+
 ```{r}
 # Evaluate
-output <- compute(mymodel, test,rep=1)
-summary(output)
+
+model %>% evaluate(test, testtarget)
+pred = model %>% predict(test)
 ```
+
+
