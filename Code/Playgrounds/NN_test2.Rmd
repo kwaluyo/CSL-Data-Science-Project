@@ -1,0 +1,123 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+library(tensorflow)
+```
+
+```{r}
+load("./exp_blood_t.Rdata")
+load("./exp_other_t.Rdata")
+```
+
+```{r}
+colnames(exp_other_t) <- paste0("resp_", colnames(exp_other_t))
+```
+
+```{r}
+exp_combined = cbind(exp_blood_t, exp_other_t)
+```
+
+```{r}
+x <- paste(c(colnames(exp_blood_t[,1:20])),collapse="+")
+y <- paste(c(colnames(exp_other_t[,1:20])),collapse="+")
+
+f <- paste(c(y, "~", x),collapse="")
+```
+
+```{r}
+try = exp_combined[1:30,]
+```
+
+```{r}
+n = neuralnet(f, 
+              data = try, 
+              hidden = c(10, 5), 
+              linear.output = F, 
+              lifesign = 'full', 
+              rep = 1)
+```
+```{r}
+# NN Visualisation
+
+plot(n, 
+     col.hidden = 'darkgreen',
+     col.hidden.synapse = 'darkgreen',
+     show.weights = F,
+     information = F,
+     fill = 'lightblue')
+```
+```{r}
+# Matrix
+
+data = as.matrix(try)
+dimnames(data) = NULL
+```
+
+```{r}
+# Partition
+
+n = ncol(data)
+
+set.seed(321)
+ind = sample(2, nrow(data), replace = T, prob = c(0.7, 0.3))
+training = data[ind == 1, 1:n/2]
+test = data[ind == 2, 1:n/2]
+trainingtarget = data[ind == 1, (n/2+1):n]
+testtarget = data[ind == 2, (n/2+1):n]
+
+```
+
+```{r}
+# Normalize
+
+m = colMeans(training)
+s = apply(training, 2, sd)
+training = scale(training, center = m, scale = s)
+test = scale(test, center = m, scale = s)
+```
+
+```{r}
+# Create Model
+
+model = keras_model_sequential()
+model %>% layer_dense(units = 5, activation = 'relu', input_shape = c(20)) %>%
+          layer_dense(units = 20)
+```
+
+```{r}
+# Compile
+
+model %>% compile(loss = 'mse',
+                  optimizer = 'rmsprop',
+                  metrics = 'mae')
+
+```
+
+```{r}
+# Fit Model
+
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 2,
+      batch_size = 32,
+      validation_split = 0.2)
+```
+
+```{r}
+# Evaluate
+output <- compute(mymodel, test,rep=1)
+summary(output)
+```
