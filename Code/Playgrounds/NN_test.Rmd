@@ -234,50 +234,10 @@ Need to tune the learning rate
 
 
 
-```{r}
-load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Whole Blood.Rdata"))
-df_blood = df
-rownames(df_blood$cpm_tmm) <- df_blood$genes$gene_id 
-colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
-
-load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Lung.Rdata"))
-df_other = df
-rownames(df_other$cpm_tmm) <- df_other$genes$gene_id 
-colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID
-
-shared_genes <- df_blood$genes$gene_id[df_blood$genes$gene_id%in%df_other$genes$gene_id] 
-  shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
-    
-exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
-exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
-```
-
-```{r}
-# Data
-
-exp_blood_t = t(exp_blood)
-exp_other_t = t(exp_other)
-```
-
-```{r}
-# NN Visualisation
-
-n = neuralnet(medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + lstat, 
-              data = data, 
-              hidden = c(10, 5), 
-              linear.output = F, 
-              lifesign = 'full', 
-              rep = 1)
-
-plot(n, 
-     col.hidden = 'darkgreen',
-     col.hidden.synapse = 'darkgreen',
-     show.weights = F,
-     information = F,
-     fill = 'lightblue')
 
 
-```
+
+
 
 ```{r}
 
