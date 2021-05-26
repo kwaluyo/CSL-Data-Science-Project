@@ -8,6 +8,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+
+```
+
+```{r}
 library(keras)
 library(mlbench)
 library(dplyr)
