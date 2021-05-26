@@ -35,7 +35,13 @@ colnames(exp_other_t) <- paste0("resp_", colnames(exp_other_t))
 ```
 
 ```{r}
-NUM_GENE = 50
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = ALL_GENE
 exp_combined = cbind(exp_blood_t[,1:NUM_GENE], exp_other_t[,1:NUM_GENE])
 ```
 
@@ -46,38 +52,36 @@ y <- paste(c(colnames(exp_other_t[,1:NUM_GENE])),collapse="+")
 f <- paste(c(y, "~", x),collapse="")
 ```
 
-```{r}
-f
-```
 
 
-
-
-
-```{r}
-try = exp_combined
-```
 
 
 ```{r}
 # Matrix
 
-data = as.matrix(try)
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+
+data = as.matrix(exp_combined_shuffled)
 dimnames(data) = NULL
 ```
 
 ```{r}
 # Partition
+train_proportion = 0.9
+test_proportion = 1-train_proportion
 
+n_train = round(N*train_proportion)
+n_test = N - n_train
 
+training = data[1:n_train, 1:NUM_GENE]
+test = data[(n_train+1):N, 1:NUM_GENE]
 
-set.seed(321)
-ind = sample(2, nrow(data), replace = T, prob = c(0.7, 0.3))
-training = data[ind == 1, 1:NUM_GENE]
-test = data[ind == 2, 1:NUM_GENE]
-
-trainingtarget = data[ind == 1, (NUM_GENE+1):(NUM_GENE*2)]
-testtarget = data[ind == 2, (NUM_GENE+1):(NUM_GENE*2)]
+trainingtarget = data[1:n_train, (NUM_GENE+1):(NUM_GENE*2)]
+testtarget = data[(n_train+1):N, (NUM_GENE+1):(NUM_GENE*2)]
 
 ```
 
@@ -91,11 +95,26 @@ testtarget = data[ind == 2, (NUM_GENE+1):(NUM_GENE*2)]
 ```
 
 ```{r}
-# Create Model
+# Create Model1
 
-model = keras_model_sequential()
-model %>% layer_dense(units = 5, activation = 'relu', input_shape = c(NUM_GENE)) %>%
+model1 = keras_model_sequential()
+model1 %>% layer_dense(units = 5, activation = 'relu', input_shape = c(NUM_GENE)) %>%
           layer_dense(units = NUM_GENE)
+```
+
+```{r}
+# Create Model2
+
+model2 = keras_model_sequential()
+model2 %>% layer_dense(units = 10, activation = 'relu', input_shape = c(NUM_GENE)) %>%
+          layer_dense(units = 5, activation = 'relu') %>%
+          layer_dense(units = NUM_GENE)
+```
+
+```{r}
+# Choose Model
+model = model2
+
 ```
 
 ```{r}
@@ -114,7 +133,7 @@ mymodel = model %>%
   fit(training,
       trainingtarget,
       epochs = 100,
-      batch_size = 32,
+      batch_size = 8,
       validation_split = 0.2)
 ```
 
