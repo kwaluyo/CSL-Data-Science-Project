@@ -66,8 +66,15 @@ exp_combined_shuffled <- exp_combined[rows, ]
 
 
 data = as.matrix(exp_combined_shuffled)
+
 dimnames(data) = NULL
 ```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
 
 ```{r}
 # Partition
@@ -85,14 +92,7 @@ testtarget = data[(n_train+1):N, (NUM_GENE+1):(NUM_GENE*2)]
 
 ```
 
-```{r}
-# Normalize
 
-#m = colMeans(training)
-#s = apply(training, 2, sd)
-#training = scale(training, center = m, scale = s)
-#test = scale(test, center = m, scale = s)
-```
 
 ```{r}
 # Create Model1
@@ -106,8 +106,9 @@ model1 %>% layer_dense(units = 5, activation = 'relu', input_shape = c(NUM_GENE)
 # Create Model2
 
 model2 = keras_model_sequential()
-model2 %>% layer_dense(units = 10, activation = 'relu', input_shape = c(NUM_GENE)) %>%
-          layer_dense(units = 5, activation = 'relu') %>%
+model2 %>% layer_dense(units = 1000, activation = 'relu', input_shape = c(NUM_GENE)) %>%
+          layer_dense(units = 100, activation = 'relu') %>%
+          layer_dense(units = 1000, activation = 'relu') %>%
           layer_dense(units = NUM_GENE)
 ```
 
@@ -120,7 +121,7 @@ model = model2
 ```{r}
 # Compile
 
-model %>% compile(loss = 'mse',
+model <- model %>% compile(loss = 'mse',
                   optimizer = 'rmsprop',
                   metrics = 'mae')
 
@@ -129,11 +130,12 @@ model %>% compile(loss = 'mse',
 ```{r}
 # Fit Model
 
+set.seed(123)
 mymodel = model %>% 
   fit(training,
       trainingtarget,
-      epochs = 100,
-      batch_size = 8,
+      epochs = 300,
+      batch_size = 64,
       validation_split = 0.2)
 ```
 
