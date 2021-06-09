@@ -1,10 +1,11 @@
 ---
 title: "Task 03 & Task 04 - Data Science Project"
 author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
-date: "1000555 & 1129446" 
-output: 
+date: "1000555 & 1129446"
+output:
+  pdf_document: default
   word_document:
-    fig_caption: TRUE
+    fig_caption: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -14,17 +15,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Task 03 aims at selecting appropriate sample size for training, validation and test sets defined for the chosen tissues i.e. Lung, Skin - Not sun exposed, and Nerve - Tibial. 
 
-Additionally, Task 04 deals with the selection of modelling methods that can be used to predict normally distributed input. 
+Task 04 deals with the selection of modelling methods that can be used to predict normally distributed output from normally distributed input.
 
 ## Task 03: Defining the sizes of training, validation and test sets 
 
 The first half of this report will cover the approach and strategy behind choosing the appropriate proportions for the different sets. The type of sets involved in this project are: 
 
 1. Training set: the samples belonging to this set will be used to create the model. It is typically the set with the largest sample size. 
-2. Validation set: this set will be used to tune the parameters of the model and to further optimise it. 
+2. Validation set: this set will be used to tune the parameters of the model and to further optimise it. Furthermore, this set will also be used to choose the best model between the 2 models (Random Forest and Neural Network) which are going to be further discussed in Task 04.
 3. Test set: the model is finally run on this set, which it has never seen. It is used to assess the performance of the model and the accuracy of results. 
 
-After referring various sources and published papers related to topics surrounding prediction of gene expression, our approach to choosing the correct proportions for the sets was to ensure that each one of them has an ample amount of donors. Choosing an arbitrary number of 30 samples, our main aim is to ensure that the test set must have a sample size of atleast 30 donors overlapping with Whole Blood. 
+We could not find a strong agreement after referring various sources and published papers on selecting appropriate proportion to define Training, Validation and Test sets. Hence, our approach to choosing the correct proportions for the sets was to ensure that each one of them has an ample amount of donors. Choosing an arbitrary number of 30 samples, our main aim is to ensure that the test set (the smallest across the three) must have a sample size of at least 30 donors overlapping with Whole Blood. 
 
 ```{r echo=FALSE}
 #indexes
@@ -39,8 +40,8 @@ library(tidyr)
 ```
 
 ```{r echo=FALSE}
-#files <- list.files("~/CSL/TMM_norm_filt_counts")
-files <- list.files("~/TMM_norm_filt_counts")
+files <- list.files("~/CSL/TMM_norm_filt_counts")
+#files <- list.files("~/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -137,10 +138,19 @@ By the method of trial and error, random sets of proportions were tried and test
 2. Validation set: 0.2 or 20% 
 3. Test set: 0.1 or 10% 
 
-Figure 1 is a bar plot that visualises the count of each set for the chosen tissues i.e. Lung, Nerve - Tibial, Skin - (Not sun exposed). We can see that for each tissue, the test set comfortably exceeds the count of 30 donors. Hence, we can conclude that 0.7-0.2-0.1 makes for most suited and desired proportion for the sets. 
+In **Figure 1**, we can see that for each tissue, the test set comfortably exceeds the count of 30 donors. Hence, we can conclude that 0.7-0.2-0.1 makes for most suited and desired proportion for the sets. 
+
+
+```{r}
+prop_3_tissues = prop_7_2_1_long[c(109,110,111,118,119,120,133,134,135),]
+prop_3_tissues$set[prop_3_tissues$set=='train'] = '1train'
+prop_3_tissues$set[prop_3_tissues$set=='val'] = '2val'
+prop_3_tissues$set[prop_3_tissues$set=='test'] = '3test'
+label = rep(c("Train", "Val", "Test"), 3)
+```
 
 ```{r figs1, echo=FALSE, fig.cap="\\label{fig:figs1}Count of samples per set for chosen tissues"}
-ggplot(data=prop_7_2_1_long[c(109,110,111,118,119,120,133,134,135),], aes(x=set, y=value, fill = tissue)) +
+ggplot(data=prop_3_tissues, aes(x=set, y=value, fill = tissue)) +
   ggtitle("Sample Sizes for Train, Validation, and Test Set") + 
   xlab("Set") + ylab("Size") +
   theme(axis.text.x = element_text(hjust=1, angle = 30, size=10),
@@ -149,51 +159,41 @@ ggplot(data=prop_7_2_1_long[c(109,110,111,118,119,120,133,134,135),], aes(x=set,
         legend.position='bottom') +
 
   geom_bar(stat="identity", show.legend=FALSE) +
-  geom_text(aes(label = value), size = 3, vjust=-0.5)+
+  geom_text(aes(label=value), size = 3, vjust=-0.5)+
   facet_wrap(~tissue)
 ```
 
-Additionally, Figure 2 visualises the count of each of the sets for the other tissues. We observe that although there are many other tissues that have a high count of samples in the test set like Artery - Tibial, these tissues either probably have lesser count of overlapping donors with Whole Blood or probably do not share a strong correlation with Whole Blood. As discovered in previous tasks, tissues with an overall low count of donors and count of overlapping donors, like Fallopian Tube, Cervix - Endocervix and Kidney - Medulla, have the least count in each of the sets.
 
 
 
-```{r figs2, echo=FALSE, fig.cap="\\label{fig:figs2}Count of samples per set for other tissues"}
-ggplot(data=prop_7_2_1_long[-c(160,161,162),], aes(x=set, y=value, fill = tissue)) +
-  ggtitle("Sample Sizes for Train, Validation, and Test Set") + 
-  xlab("Set") + ylab("Size") +
-  theme(axis.text.x = element_text(hjust=1, angle = 30, size=2),
-        axis.text.y = element_text(size=5),
-        legend.text = element_text(size=5),
-        legend.key.size = unit(0.4, 'cm'),
-        legend.position='bottom',
-        strip.text = element_text(size=3))+
 
-  geom_bar(stat="identity", show.legend=FALSE) +
-  geom_text(aes(label = value), size = 2, vjust=-1)+
-  facet_wrap(~tissue, nrow=5)
-```
+
+
+
 
 ## Task 04: Choosing and comparing modelling methods 
 
-The the methods we wish to explore in this project are Neural Networks and Random Forests. 
+The methods we deemed appropriate to initially to explore in this project are Neural Networks and Random Forests. 
 
 ### Neural Networks 
 
-Over the past few decades, neural networks modelling has been considered as one of the most powerful tools, and its ability to handle a huge amount of data made it very popular in the literature. Having deep hidden layers in the models has recently become an interest that has started to surpass classical methods performance in many fields, especially in pattern recognition. 
+Over the past few decades, neural networks modelling has been considered as one of the most powerful tools, and its ability to handle a huge amount of data made it very popular in the literature. Having deep hidden layers in the models has recently become more and more computationally feasible  and such methods has started to surpass classical methods performance in many fields, especially in pattern recognition (Mohammed and Al-Zawi, 2017). 
 
 Deep learning models have become popular in the bioinformatics field. Singh et al. (2016) used a unified CNN framework that automatically learns combinatorial interactions among histone modification marks to predict gene expression. Qi et al. (2012) used a deep multilayer perceptron (MLP) architecture with multitask learning to perform sequence-based protein structure prediction.
 
+By using neural networks, the idea of setting up a lightly parameterised function shaped by human can be forgotten. Instead, it allows us to set up a highly parameterised function that is very flexible and will be conveniently shaped during the learning phase. To put it simply, a deep learning model automatically learns complex functions that map inputs to outputs and rules out the need to use hand-crafted features (Singh et al., 2016). Since the input data of this project has a very large feature dimension, neural network is considered as one of the suitable approaches.
+
 ![Neural networks in the human brain](fig 1.png)
 
-The idea of neural network came from the most interesting organ in the human body, the brain. The human brain is made up of billions of basic units called neurons. Figure 3 illustrates the basic neuron unit. The neuron is made up of dendrites, a cell body and an axon connecting to axon terminals. The brain will receive information or inputs which are then transferred into the cell body through dendrites. The cell body works as the processing unit, where all the learnt information is then transferred into outputs and passed down by the axon. The muscles then receive the outputs from the axon terminals for actions. McCulloch and Pitts first studied this concept in 1943 to form a mathematical model.
+The idea of neural network came from our understanding of the brain structure and function. The human brain is made up of billions of basic units called neurons. **Figure 2** illustrates the basic neuron unit. The neuron is made up of dendrites, a cell body and an axon connecting to axon terminals. The brain will receive information or inputs which are then transferred into the cell body through dendrites. The cell body works as the processing unit, where all the learnt information is then transferred into outputs and passed down by the axon. The muscles then receive the outputs from the axon terminals for actions. McCulloch and Pitts first studied this concept in 1943 to form a mathematical model (Bakar and Tahir, 2009).
 
 ![Hidden layers of a network](fig 2.png)
 
-Figure 4 shows a one hidden layer feed forward network with inputs $x_1,…,x_i,$ and output $y_k$. Each input has its own synaptic weight. The weights are then passed onto the hidden layer, which consists of several hidden neurons. A weighted summation of the inputs is performed by each neuron and then it passes a nonlinear activation function.
+**Figure 3** shows a one hidden layer feed forward network with inputs $x_1,…,x_i,$ and output $y_k$. Each input has its own synaptic weight. The weights are then passed onto the hidden layer, which consists of several hidden neurons. A weighted summation of the inputs is performed by each neuron and then it passes a nonlinear activation function.
 
 ![An snapshot of GTex data as a neural network](fig 3.png)
 
-In our case, the input will be a matrix of the gene expression of Whole Blood and the output will be a matrix of the gene expression prediction of another tissue. The visualisation of the expected neural network model is shown in Figure 5. Note that the number of hidden layers is yet to be decided, and it is for visualisation purpose only. Same thing applies for the number of input and output nodes. The number of input and output nodes in the real model will depend on the number of shared genes between Whole Blood and the other tissue.
+In our case, the input will be a matrix of the gene expression of Whole Blood and the output will be a matrix of the gene expression prediction of another tissue. The visualisation of the expected neural network model is shown in **Figure 4**. Note that the number of hidden layers is yet to be decided, and it is for visualisation purpose only. Same thing applies for the number of input and output nodes. The number of input and output nodes in the real model will depend on the number of shared genes between Whole Blood and the other tissue.
 
 
 ### Random Forests (RF)
