@@ -141,7 +141,7 @@ By the method of trial and error, random sets of proportions were tried and test
 In **Figure 1**, we can see that for each tissue, the test set comfortably exceeds the count of 30 donors. Hence, we can conclude that 0.7-0.2-0.1 makes for most suited and desired proportion for the sets. 
 
 
-```{r}
+```{r echo=FALSE}
 prop_3_tissues = prop_7_2_1_long[c(109,110,111,118,119,120,133,134,135),]
 prop_3_tissues$set[prop_3_tissues$set=='train'] = '1train'
 prop_3_tissues$set[prop_3_tissues$set=='val'] = '2val'
