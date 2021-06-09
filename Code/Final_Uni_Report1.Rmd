@@ -1,0 +1,740 @@
+---
+title: "Final Report - Data Science Project pt. 1"
+author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
+date: "1000555 & 1129446" 
+output: 
+  pdf_document:
+    fig_caption: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1 Introduction
+# 2 Related Work
+
+# 3 Data Analysis
+## 3.1 Exploration of the Gene Expression Data and Tissue Donor Metadata
+To understand each of the data frames better, four matrices containing the following information can be created:  
+
+1. Overlapping donor count: matrix that represents the count of overlapping donors between all pairs of tissues. 
+2. Overlapping donor proportion: matrix that represents the proportion of overlapping donors between all pairs of tissues. 
+3. Shared gene count: matrix that represents the count of overlapping expressed genes between all pairs of tissues. 
+4. Shared gene proportion: matrix that represents the proportion of expressed overlapping genes between all pairs of tissues.  
+
+Furthermore, each of the above matrices are visualized using heatmaps. 
+
+Additionally, bar plots are produced to understand the proportion of overlapping donors and shared genes amongst tissues, based off of different parameters. 
+
+
+```{r echo=FALSE}
+#files <- list.files("~/TMM_norm_filt_counts")
+files <- list.files("~/CSL/TMM_norm_filt_counts")
+```
+
+```{r echo=FALSE}
+require("edgeR", quietly=TRUE)
+tissue_list <- list()
+file_name <- list()
+
+c = 1
+for (i in files) {
+  load(paste("./TMM_norm_filt_counts/",i, sep=""))
+  tissue_list[[i]] <- df
+  file_name[c] = i
+  c = c + 1
+}
+```
+
+
+```{r echo=FALSE}
+n = length(tissue_list)
+```
+
+```{r echo=FALSE}
+tissue_names = list()
+global_tissue_names = list()
+
+i = 1
+for (a in file_name) {
+  a = sub("TMM_filt_counts_","",a)
+  a = sub(".Rdata","",a)
+  tissue_names[[i]] = a
+  a = unlist(strsplit(a, split=' -', fixed=TRUE))[1]
+  global_tissue_names[[i]] = a
+  
+  i = i + 1
+}
+tissue_names = as.character(tissue_names)
+global_tissue_names = as.character(global_tissue_names)
+
+```
+
+
+```{r echo=FALSE}
+tissue_donor_count = matrix(, nrow=n, ncol=n)
+colnames(tissue_donor_count) = tissue_names
+rownames(tissue_donor_count) = tissue_names
+```
+
+```{r echo=FALSE}
+tissue_donor_proportion = matrix(, nrow=n, ncol=n)
+colnames(tissue_donor_proportion) = tissue_names
+rownames(tissue_donor_proportion) = tissue_names
+```
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    samples1 = i$samples
+    samples2 = j$samples
+    tissue_count = sum(samples1$SUBJID %in% samples2$SUBJID)
+    tissue_donor_count[row, col] = tissue_count
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+
+```
+
+
+```{r echo=FALSE}
+
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    samples1 = i$samples
+    samples2 = j$samples
+    tissue_proportion = sum(samples1$SUBJID %in% samples2$SUBJID)/length(samples1$SUBJID)
+    tissue_donor_proportion[row, col] = tissue_proportion
+    
+    col = col + 1
+  }
+  
+  
+  row = row + 1
+}
+
+```
+
+
+
+
+```{r echo=FALSE}
+shared_gene_count = matrix(, nrow=n, ncol=n)
+colnames(shared_gene_count) = tissue_names
+rownames(shared_gene_count) = tissue_names
+```
+
+```{r echo=FALSE}
+shared_gene_proportion = matrix(, nrow=n, ncol=n)
+colnames(shared_gene_proportion) = tissue_names
+rownames(shared_gene_proportion) = tissue_names
+```
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    genes1 = i$genes
+    genes2 = j$genes
+    gene_count = sum(genes1$gene_id %in% genes2$gene_id)
+    shared_gene_count[row, col] = gene_count
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+```
+
+
+```{r echo=FALSE}
+row = 1
+for (i in tissue_list) {
+  col = 1
+  for (j in tissue_list) {
+    genes1 = i$genes
+    genes2 = j$genes
+    gene_proportion = sum(genes1$gene_id %in% genes2$gene_id)/length(genes1$gene_id)
+    shared_gene_proportion[row, col] = gene_proportion
+    
+    col = col + 1
+  }
+  
+  row = row + 1
+}
+```
+
+
+```{r echo=FALSE}
+#install.packages("pheatmap")
+library("pheatmap")
+```
+
+### 3.1.1 The count of overlapping donors between all pairs of tissue samples  
+
+To visualise the count of overlapping donors between all possible pairs of tissues, a matrix is created to tabulate the count of overlapping donors for all pairs of tissues. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
+
+```{r figs1, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs1}Heatmap representing no. of overlapping donors for each tissue pair" }
+pheatmap(tissue_donor_count, main="Heatmap of Donor Overlap Counts in All Pairs of Tissues")
+```
+
+
+In this symmetrical matrix, rows and columns are clustered by similarity in terms of donor overlap. Since each element in **Figure 1** is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most overlapping donors. 
+
+From **Figure 1**, Whole Blood and Muscle - Skeletal is one example of two tissues that have a high count of overlapping donors. On the other hand, Kidney - Medulla and Pancreas pair has an extremely low count of overlapping donors. The diagonal stands out as it gives the total count of overlapping donors per tissue. Muscle - Skeletal is the tissue with the highest number of donors whereas Kidney - Medulla seems to have the lowest number of donors. 
+
+As for the clustering, the resulting heatmap has clustered similar tissues close to each other based on overlapping count of donors. A portion of the bottom right quadrant (starting from Muscle - Skeletal row and column) displays a cluster that has the highest number of overlapping donors.The rest of the heatmap has clustered tissues that display an average to low count of overlapping donors. 
+
+### 3.1.2 The proportion of overlapping donors between all pairs of tissue samples  
+Here, a matrix is created to tabulate the proportion of donors for all pairs of tissues. This is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names. 
+
+In this proportion matrix, it can be observed that all diagonal elements will be equal to 1 since those cells represent the total proportion of donors per tissue. However, this matrix is non-symmetrical because every non-diagonal element corresponds to a different row tissue and a different column tissue while calculating the proportion per element. Each of them take a value between 0 and 1 inclusive and can be expressed in terms of percentages. For example, the proportion of overlapping donors between Liver and Whole Blood is 0.241 i.e overlapping donors between Liver and Whole Blood donors make up 24.1% of Whole Blood donors.
+
+
+```{r figs2, fig.height=20, fig.width=20, echo=FALSE, fig.cap="\\label{fig:figs2}Heatmap representing proportion of overlapping donors for each tissue pair"}
+pheatmap(tissue_donor_proportion, main="Heatmap of Donor Overlap Proportions in All Pairs of Tissues")
+```
+
+Every cell that is coloured red in **Figure 2** denotes full proportion which is the proportion of the tissue to itself, or extremely high proportion. The other cells are likely to be values lesser than 1. 
+
+It is important to note that every column tissue acts as a numerator and every row tissue is the denominator. The column tissue's proportion is based on the number of overlapping donors shared with the row tissue and is divided by the total donors a row tissue contains. For example: according to **Figure 2**, the proportion of overlapping donors between Liver and Whole Blood is very high. Subsequently, the proportion of overlapping doors between Whole Blood and Liver is comparatively lower. 
+
+As for the clustering, there is an obvious cluster starting from the leftmost column up to the Esophagus - Muscularis column, which means that the donors of each column tissue make up high percentages of donors in almost all row tissues. The row tissues have also been clustered in such a way that the top most row tissues have the least proportion of overlapping donors, but as we go down the row, the proportion increases. 
+
+Another interesting observation is of the rows and columns of Testis and Vagina, whose corresponding cells have the least shared proportion of donors, a value very close to zero. This acts as a good check to see if the table gives us an accurate depiction of the overlapping donors across all tissue pairs.  
+
+
+```{r echo=FALSE}
+library(ggplot2)
+
+```
+
+
+```{r echo=FALSE}
+proportion = tissue_donor_proportion[,"Whole Blood"]
+whole_blood_column_donor = data.frame(proportion)
+whole_blood_column_donor$subtissue = as.character(tissue_names)
+whole_blood_column_donor$tissue = as.character(global_tissue_names)
+whole_blood_column_donor = whole_blood_column_donor[!(whole_blood_column_donor$subtissue=="Whole Blood"),]
+
+proportion = tissue_donor_proportion["Whole Blood",]
+whole_blood_row_donor = data.frame(proportion)
+whole_blood_row_donor$subtissue = as.character(tissue_names)
+whole_blood_row_donor$tissue = as.character(global_tissue_names)
+whole_blood_row_donor = whole_blood_row_donor[!(whole_blood_row_donor$subtissue=="Whole Blood"),]
+
+
+```
+
+```{r echo=FALSE}
+proportion = shared_gene_proportion[,"Whole Blood"]
+whole_blood_column_gene = data.frame(proportion)
+whole_blood_column_gene$subtissue = as.character(tissue_names)
+whole_blood_column_gene$tissue = as.character(global_tissue_names)
+whole_blood_column_gene = whole_blood_column_gene[!(whole_blood_column_gene$subtissue=="Whole Blood"),]
+
+proportion = shared_gene_proportion["Whole Blood",]
+whole_blood_row_gene = data.frame(proportion)
+whole_blood_row_gene$subtissue = as.character(tissue_names)
+whole_blood_row_gene$tissue = as.character(global_tissue_names)
+whole_blood_row_gene = whole_blood_row_gene[!(whole_blood_row_gene$subtissue=="Whole Blood"),]
+
+
+```
+
+
+
+```{r echo=FALSE}
+#install.packages("RColorBrewer")                   # Install RColorBrewer package
+library(RColorBrewer)                            # Load RColorBrewer
+```
+
+
+```{r figs3, echo=FALSE, fig.cap="\\label{fig:figs3}Bar plot representing the proportion of overlapping donors of all tissues with whole blood"}
+ggplot(data=whole_blood_column_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Donors of all Tissues with Whole Blood") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+```{r figs4, echo=FALSE, fig.cap="\\label{fig:figs4}Bar plot representing the proportion of overlapping donors of whole blood with other tissues"}
+ggplot(data=whole_blood_row_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Donors of Whole Blood with all other Tissues") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
+
+
+
+```
+
+**Figure 4** depicts the proportion of overlapping donors of Whole Blood in all other Tissues. Muscle - Skeletal has the highest proportion of overlapping donors with Whole Blood whereas, Kidney - Medulla has the least. It gives us a picture of how many Whole Blood donors have also donated other tissues. 
+
+Note: **Figure 4** considers Whole Blood as the denominator. 
+
+### 3.1.3 The count of shared genes between all pairs of tissue samples  
+
+Next we wanted to investigate the similarity of tissues in terms of gene expression. To start off, a count matrix that records the count of shared genes across different pairs of tissues is created. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
+
+We observe that the diagonal elements of this matrix give us the total count of genes for each tissue. The non-diagonal elements give us the count of shared genes between two tissues. For example, the count of shared genes between Liver and Whole Blood is 11124, which is equal to the count of shared genes between Whole Blood and Liver. Hence, this matrix is also symmetrical.  
+
+
+
+```{r figs5, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs5}Heatmap representing the count of overlapping genes in all tissue pairs"}
+pheatmap(shared_gene_count, main="Heatmap of Overlapping Gene Count in All Pairs of Tissues")
+```
+**Figure** 5 is a visual representation of the count matrix described above, in which the rows and columns represent all 54 tissues. In this symmetrical matrix rows and columns are clustered by similarity in terms of shared genes. Since each element in the resulting count matrix is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most count of shared genes.
+
+From this heatmap, Brain - Cortex and Brain - Frontal Cortex (BA9)  is one example of two tissues that have a high count of shared genes. Additionally, Liver and Brain - Cerebellar is an example of a tissue pair that has an extremely low count of shared genes. The diagonal in the heatmap stands out since it denotes the total count of genes of a tissue. Testis is the tissue with the highest number of expressed genes and Liver seems to have the lowest count of genes. 
+
+As for the clustering, we observe that similar row tissues and column tissues are clustered close to each other, according to count of shared genes. The middle portion of **Figure 5**, coloured in shades of red is a cluster that has a high to average count of shared genes. The rest of the heatmap has clustered tissues with low count of shared genes.
+
+### 3.1.4 The proportion of shared genes between all pairs of tissue samples 
+
+To obtain the appropriate heatmap, a matrix that records the proportion of shared genes between different pairs of tissue is created. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
+
+The diagonal elements of this proportion matrix will all be equal to 1, as they represent the total proportion of genes per tissue. This resulting proportion matrix will be non-symmetrical.
+
+```{r figs6, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs6}Heatmap representing the proportion of overlapping genes in all tissue pairs"}
+pheatmap(shared_gene_proportion, main="Heatmap of Overlapping Gene Proportions in All Pairs of Tissues")
+```
+**Figure 6** gives a graphical representation of the proportion of shared genes in different pairs of tissues, in which all rows and columns represent all 54 tissues. Every cell that is coloured red denotes full proportion which is the proportion of genes of the tissue to itself or a very high proportion. The other cells are likely to be values lesser than 1. 
+
+In this heatmap, we consider the column tissues as numerators and row tissues as denominators. While calculating each proportion, the number of genes shared between the column tissue and row tissue is divided by the total genes expressed in the row tissue. According to the heatmap above, the proportion of shared genes between Testis and every other tissue seems to be on the lower side. This is a salient outlier that can be noticed straight away. On the other hand, the proportion of shared genes of every other tissue with Testis is fairly high.
+
+In terms of clustering, all similar gene proportions have been clustered together in the rows and columns. Majority of the heatmap is shades of red - which signifies that those column tissues make up a large proportion of their corresponding row tissues. Similarly, the portion of the bottom right quadrant, shaded in blue, denotes that the column tissues make up a small proportion of their corresponding row tissues.  
+
+```{r figs7, echo=FALSE, fig.cap="\\label{fig:figs7}Bar plot representing the proportion of overlapping genes of all tissues with whole blood"}
+ggplot(data=whole_blood_column_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Genes of all Tissues with Whole Blood") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
+         legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+**Figure 7** is a visualisation of all overlapping genes of other Tissues with Whole Blood. Here, we observe that the proportion of shared genes of Testis and Whole Blood is the least. Whole Blood and Cervix - Ectocervix has the highest proportion of shared genes in this case.
+
+
+```{r figs8, echo=FALSE, fig.cap="\\label{fig:figs8}Bar plot representing the proportion of overlapping genes of whole blood with all other tissues"}
+ggplot(data=whole_blood_row_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
+  ggtitle("Proportion of Overlapping Genes of Whole Blood with all other Tissues") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=6),
+         legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity", color="white") +
+  geom_text(aes(label = round(proportion, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+**Figure 8** shows the proportion of shared genes of Whole Blood with all other tissues. The Spleen has the highest proportion of shared genes, which are also found in Whole Blood. The proportion of shared genes in Liver and Whole Blood is the least amongst the lot. 
+
+Note: **Figure 8** considers Whole Blood as the denominator. 
+
+
+```{r echo=FALSE}
+whole_blood_row_donor = whole_blood_row_donor[order(-whole_blood_row_donor$proportion), ]
+whole_blood_row_donor_top10 = whole_blood_row_donor[1:10,]
+
+whole_blood_row_gene = whole_blood_row_gene[order(-whole_blood_row_gene$proportion), ]
+whole_blood_row_gene_top10 = whole_blood_row_gene[1:10,]
+```
+Furthermore, to investigate the tissues that are the most similar to Whole Blood, we create the following lists:  
+
+1. List of the top 10 tissues that share most of its donors with Whole Blood 
+
+```{r}
+whole_blood_row_donor_top10[,c(1,3)]
+```
+
+2. List of the top 10 tissues that share most of its genes with Whole Blood
+```{r}
+whole_blood_row_gene_top10[,c(1,3)]
+```
+
+In short, we summarise the 'Proportion of Overlapping Donors of all Tissues with Whole Blood' and 'Proportion of Overlapping Genes of all Tissues with Whole Blood' barplots and concise them to a list. 
+
+```{r echo=FALSE}
+save(whole_blood_row_donor, file="whole_blood_row_donor.Rdata")
+save(whole_blood_row_gene, file="whole_blood_row_gene.Rdata")
+```
+
+The tissue(s) that appear in both lists are as follows:
+```{r echo=FALSE}
+top_tissues = Reduce(intersect,list(whole_blood_row_donor_top10$subtissue, whole_blood_row_gene_top10$subtissue))
+top_tissues
+```
+
+The tissue Lung is  found to be the most similar to blood based proportion of on overlapping donors and proportion of shared genes, amongst all 54 tissues. This gives us a good starting point for choosing which tissues we can use for our initial analysis. 
+
+### 3.1.5 Conclusion
+
+The heatmaps created are a great starting point to explore the data dealt with in this study. It gives us a clear-cut picture based on the count and proportion of overlapping donors and shared genes between all combinations of tissues. The most useful observations are those that have a very high count and high proportion of donors and genes, with other tissues. Those tissues can be taken for further analysis. 
+
+From the various bar plots created, we can observe the many similarities that each of the tissues possess in comparison to Whole Blood. For example, some tissues like the Spleen which shares a high proportion of genes with Whole Blood. Since they share a high number of genes. 
+
+This section projects the similarities that can be observed among many sets of tissues, based on the count of donors and genes. It helps us identify which tissues are likely to behave in the same manner, based on these two factors.
+
+Overall, this section not only allows for exploration of the dataframes involved, but also sets a premise to explore other measures of similarity between tissues and genes, like correlation. 
+
+## 3.2 Tissues Correlations and Similarities
+
+This section involves the exploration of pairwise correlation between each gene in whole blood's gene expressions with the same gene in other tissues' gene expressions. From there, the statistics of correlations of all genes in each tissue are computed. Additionally, the statistics of correlations of each gene across all tissues are also explored. Finally, the tissues are ranked on its similarity with whole blood on multiple measures.
+
+```{r echo=FALSE}
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Whole Blood.Rdata"))
+df_blood = df
+rownames(df_blood$cpm_tmm) <- df_blood$genes$gene_id 
+colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
+```
+
+
+```{r echo=FALSE}
+correlation_list <- list()
+
+blood_shared_genes = c()
+
+j = 1
+for (df_other in tissue_list) {
+  if (tissue_names[j]=="Whole Blood") {
+    next
+  }
+  rownames(df_other$cpm_tmm) <- df_other$genes$gene_id 
+  colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID 
+    
+  shared_genes <- df_blood$genes$gene_id[df_blood$genes$gene_id%in%df_other$genes$gene_id] 
+  shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
+  
+  blood_shared_genes = c(blood_shared_genes, shared_genes)
+    
+  exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
+  exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
+  
+  cor_genes_other <- data.frame(gene_id=shared_genes,r=NA) 
+  
+  for(i in 1:nrow(cor_genes_other)){ 
+    gene <- cor_genes_other$gene_id[i] 
+    cor_genes_other$r[i] <- cor(exp_blood[i,],exp_other[i,]) 
+  } 
+  colnames(cor_genes_other)[colnames(cor_genes_other) == "r"] <- paste("r","TMM_filt_counts_Whole Blood.Rdata", file_name[j], sep=" ")
+  correlation_list[[j]] <- cor_genes_other
+  j = j + 1
+}
+
+
+```
+
+```{r echo=FALSE}
+blood_shared_genes_unique = unique(blood_shared_genes)
+```
+
+
+
+```{r echo=FALSE}
+corr_stats_list = data.frame(tissue_of_interest="Whole Blood", tissueX=tissue_names, global_tissue = global_tissue_names, median=NA, median_abs=NA, mean=NA, mean_abs=NA)
+
+for (i in 1:length(correlation_list)) {
+  curr_df = correlation_list[[i]]
+  cor = curr_df[,2]
+  
+  corr_stats_list$mean[i] = mean(cor)
+  corr_stats_list$mean_abs[i] = mean(abs(cor))
+
+
+  corr_stats_list$median[i] = median(cor)
+  corr_stats_list$median_abs[i] = median(abs(cor))
+
+}
+```
+
+```{r echo=FALSE}
+corr_stats_list = corr_stats_list[!(corr_stats_list$tissueX=="Whole Blood"),]
+```
+
+
+### 3.2.1 Correlation of various tissues and with Whole Blood, based on their shared genes 
+
+We first create a vector that contains the pairwise correlation of gene x in blood with all other tissues. Mean and Median of the correlation for each tissue is found to summarise the measure of correlation across all gene expressions. We also calculate and plot the Absolute Mean and Absolute Median of correlations across the tissues and Whole Blood to understand the relationship between these a bit better. 
+
+The mean and median correlation plots are as follows: 
+
+```{r echo=FALSE}
+library(ggplot2)
+
+```
+
+```{r figs9, echo=FALSE, fig.cap="\\label{fig:figs9}Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes"}
+ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global_tissue)) +
+  ggtitle("Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity") +
+  geom_text(aes(label = round(mean, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+
+
+**Figure 9** captures the mean correlation between a particular tissue with Whole Blood, based on their shared genes.  
+
+
+
+```{r figs10, echo=FALSE, fig.cap="\\label{fig:figs10}Median Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = global_tissue)) +
+  ggtitle("Median Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity") +
+  geom_text(aes(label = round(median, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+
+
+**Figure 10** captures the median correlation between particular tissue and Whole Blood, based on their shared genes. 
+
+
+The mean correlation and median correlation can help us to predict the how high or low the count of a particular shared gene in a tissue will be, when the expression of the same gene is known in Whole Blood. It must be considered as just an approximation of how high or low the count will be, and not as a determined factor.
+
+According to **Figure 9** and **Figure 10**, we see that Spleen has the highest mean and median correlation with Whole blood. On the other hand, Cells - Cultured Fibroblasts have the least mean and median correlations with Whole Blood. It is also observed that all the individual tissues captured under 'Brain' have similar mean and median correlation values. Overall we can conclude that in this case, mean correlation and median correlation behave similarly. A closer look at each value of mean and median correlation values for each tissue suggests that they are roughly equal to each other. 
+
+
+Next, to  understand the strength of the relationship between the tissue and Whole Blood we calculated summary statistics for the absolute correlation.
+
+Now considering the absolute correlation values, the following plots are produced: 
+
+```{r figs11, echo=FALSE, fig.cap="\\label{fig:figs11}Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill = global_tissue)) +
+  ggtitle("Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(title = element_text(size=9),
+        axis.text.x = element_text(hjust=1, angle = 30, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity") +
+  geom_text(aes(label = round(mean_abs, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+
+
+**Figure 11** represents the mean of absolute correlation between a tissue and Whole Blood, based on their shared genes. 
+
+
+
+```{r figs12, echo=FALSE, fig.cap="\\label{fig:figs12}Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, fill = global_tissue)) +
+  ggtitle("Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
+  xlab("Sub-Tissues") + ylab("Proportion") +
+  theme(title = element_text(size=9),
+        axis.text.x = element_text(hjust=1, angle = 30, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity") +
+  geom_text(aes(label = round(median_abs, 3)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+
+
+**Figure 12** captures the median of absolute correlation between a tissue and Whole Blood, based on their shared genes.
+
+In the context of this section, the absolute correlation is a measure that denotes the strength of the relationship between the tissue and Whole Blood, based on their shared genes. The direction of the relationship between the two is not accounted for while using absolute correlation. For each of the shared genes, we then take the absolute correlation and then continue to aggregate it using mean and median to get a summarised picture. 
+
+From **Figure 11** and **Figure 12**, we can see that Kidney - Medulla has the strongest relationship with Whole Blood, based on their shared genes. Furthermore, Cells - Cultured Fibroblasts share the weakest relationship with Whole Blood. All tissues in the brain have roughly the same strength of relationship between Whole Blood. This can lead us to further conclude that the of mean and median of absolute correlation are roughly are the same values for each tissue. 
+
+### 3.2.2 Correlation of each gene found in Whole Blood across all other tissues
+
+```{r echo=FALSE}
+mean_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
+```
+
+
+```{r echo=FALSE}
+all_mean = c()
+for (gene in blood_shared_genes_unique) {
+  gene_cor_list = c()
+  for (i in 1:length(correlation_list)) {
+  curr_df = correlation_list[[i]]
+  cor = curr_df[curr_df$gene_id==gene, 2]
+  gene_cor_list = c(gene_cor_list, cor)
+  }
+  mean_cor = mean(gene_cor_list)
+  all_mean = c(all_mean, mean_cor)
+}
+
+mean_correlation_gene$mean = all_mean
+
+```
+
+The second part of the section explores how each gene found in Whole Blood is correlated to the same gene found other Tissues. For this section, we will utilise mean correlation and median correlation to summarise the overall picture. Density plots are used also to graphically represent the findings. 
+
+```{r figs13, echo=FALSE, fig.cap="\\label{fig:figs13}Mean Correlation of Each Gene of Whole Blood with all other Tissues" }
+ggplot(data = mean_correlation_gene, aes(x = mean)) + 
+  ggtitle("Mean Correlation of Each Gene of Whole Blood with all other Tissues") + 
+  geom_density()
+```
+
+
+
+**Figure 13** represents the distribution of the mean correlation of all genes found in Whole Blood with all other tissues. The peak observed in this density plot suggests that the overall mean correlation is positive. While some genes of some tissues may be highly correlated with the genes of Whole Blood, not all of them are.  
+
+```{r echo=FALSE}
+mean_abs_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
+```
+
+
+```{r echo=FALSE}
+all_mean = c()
+for (gene in blood_shared_genes_unique) {
+  gene_cor_list = c()
+  for (i in 1:length(correlation_list)) {
+  curr_df = correlation_list[[i]]
+  cor = curr_df[curr_df$gene_id==gene, 2]
+  cor = abs(cor)
+  gene_cor_list = c(gene_cor_list, cor)
+  }
+  mean_cor = mean(gene_cor_list)
+  all_mean = c(all_mean, mean_cor)
+}
+
+mean_abs_correlation_gene$mean = all_mean
+
+```
+
+```{r figs14, echo=FALSE, fig.cap="\\label{fig:figs14}Mean Absolute Correlation of Each Gene of Whole Blood with all other Tissues" }
+ggplot(data = mean_abs_correlation_gene, aes(x = mean)) + 
+  ggtitle("Mean Absolute Correlation of Each Gene of Whole Blood with all other Tissues") + 
+  geom_density()
+```
+
+
+
+Since **Figure 14** considers absolute correlation of each gene in Whole Blood with the same gene found in all other tissues, the x axis has a lower bound at zero. The majority of genes in other tissues have a correlation of about 0.10, but a very small number of them have a strong correlation.
+
+
+```{r echo=FALSE}
+save(mean_correlation_gene, file="mean_correlation_gene.Rdata")
+save(mean_abs_correlation_gene, file="mean_abs_correlation_gene.Rdata")
+```
+
+```{r echo=FALSE}
+load("./whole_blood_row_donor.Rdata")
+load("./whole_blood_row_gene.Rdata")
+```
+
+
+```{r echo=FALSE}
+rank_default = c(1:53)
+```
+
+```{r echo=FALSE}
+corr_data = data.frame(subtissue = corr_stats_list$tissueX, mean_corr = corr_stats_list$mean)
+corr_data = corr_data[order(-corr_data$mean_corr), ]
+corr_data$rank_corr = rank_default
+```
+
+
+```{r echo=FALSE}
+rank_donor_df = data.frame(subtissue = whole_blood_row_donor$subtissue, proportion_donor = whole_blood_row_donor$proportion, rank_donor=rank_default)
+
+rank_gene_df = data.frame(subtissue = whole_blood_row_gene$subtissue, proportion_gene = whole_blood_row_gene$proportion, rank_gene=rank_default)
+```
+
+```{r message=FALSE, echo=FALSE}
+#install.packages("tidyft")
+library("tidyft")
+```
+
+```{r echo=FALSE}
+rank_df = inner_join(rank_donor_df, rank_gene_df, by="subtissue")
+rank_df = inner_join(rank_df, corr_data, by="subtissue")
+```
+
+```{r echo=FALSE}
+rank_df$avg_rank = (rank_df$rank_donor + rank_df$rank_gene + rank_df$rank_corr)/3
+```
+
+### 3.2.3 Ranking tissues based on previously observed measures
+
+Finally, to acquire selection of the best tissues across all measures, we rank tissues based on three different measures: proportion of overlapping donors, proportion of shared genes and correlation between expression levels. The rank per tissue per measure is averaged out to give us the final rank it holds. 
+
+The following list and bar plot represent the top tissues with the highest proportion of overlapping donors, proportion of shared genes and correlation. These are the best tissues to be chosen across all measures:
+
+```{r echo=FALSE}
+rank_df_sorted = rank_df[order(rank_df$avg_rank), ]
+head(rank_df_sorted)
+```
+
+
+```{r figs15, echo=FALSE, fig.cap="\\label{fig:figs15}Overall Ranking of Tissues across all Measures" }
+ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill = subtissue)) +
+  ggtitle("Overall Ranking of Tissues across all Measures") + 
+  xlab("Sub-Tissues") + ylab("Rank") +
+  theme(title = element_text(size=9),
+        axis.text.x = element_text(hjust=1, angle = 30, size=5),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity", show.legend=FALSE) +
+  geom_text(aes(label = round(avg_rank, 2)), size = 2, angle=90, hjust=-0.1)
+
+```
+
+
+
+Since ranks have been the most consistent unit across all measures so far, the ranking computation carried out can help with the selection of the best tissue across all measures. 
+
+### 3.2.4 Conclusion 
+
+Here we explored how shared genes across all tissues are correlated to Whole Blood. Each correlation value measured in this section helps us understand the kind of relationship every tissue shares with Whole Blood, based on the genes they share. 
+
+Not necessarily having the lowest rank, some tissues are chosen as the starting point for further analysis. The tissues are Lung, Skin - Not sun exposed, and Nerve - Tibial. These tissues are chosen because they have high overlapping number of donors with whole blood, taking into account its low correlations with whole blood. Contradicting the initial reason of using the lowest ranked tissues as the starting point, it is decided to use tissues with low correlation with whole blood so that the starting point could also be considered as the worst case scenario.
+
+
+
+# 4 Proposal
+# 5 Timeline
