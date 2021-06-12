@@ -1,7 +1,8 @@
 ---
 title: "Final Report - Data Science Project pt. 1"
-author: "Kartika Waluyo & Vrinda Rajendar Rajanahally"
-date: "1000555 & 1129446" 
+author:
+  - Kartika Waluyo, 1000555
+  - Vrinda Rajendar Rajanahally, 1129446
 output: 
   pdf_document:
     fig_caption: TRUE
@@ -12,7 +13,41 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # 1 Introduction
-# 2 Related Work
+# 2 Background Knowledge
+## 2.1 Introduction to Genetics
+Proteins are large molecules that are complex and play critical and majority roles in the body. Proteins are encoded by genes, that are specific regions of the DNA through a process of two stages (Al Bhketan, 2020). The first stage is transcription which is the process where the DNA within a gene is transcribed into messenger Ribonucleic Acid (mRNA). The second stage is translation which is the process where the mRNA is translated into a protein.
+
+The genetic instructions needed for cells to function are contained by the DNA. However, the cells of the same individual that contain the same genetic instructions can behave differently. That is due to the proteins, instead of the DNA of a gene, being responsible for cell functionalities. In spite of being very important, measuring the level of protein present in a cell is a hard procedure. However, it is easier to measure mRNA level which will give an estimation of protein levels. Over different cells, not all genes are expressed into mRNA, and when they do, it does not necessarily mean that they are expressed similarly. Genes are considered to be active when they are highly expressed, and inactive when they are lowly expressed (Al Bhketan, 2020).
+
+## 2.2 Machine Learning
+The machine learning methods we deemed appropriate to initially to explore in this project are Neural Networks and Random Forests. 
+
+### 2.2.1 Neural Network
+Over the past few decades, neural networks modelling has been considered as one of the most powerful tools, and its ability to handle a huge amount of data made it very popular in the literature. Having deep hidden layers in the models has recently become an interest that has started to surpass classical methods performance in many fields, especially in pattern recognition (Albawi et al., 2017). 
+
+Deep learning models have become popular in the bioinformatics field. Singh et al. (2016) used a unified CNN framework that automatically learns combinatorial interactions among histone modification marks to predict gene expression. Qi et al. (2012) used a deep multilayer perceptron (MLP) architecture with multitask learning to perform sequence-based protein structure prediction (Qi et al., 2012). 
+
+By using neural networks, the idea of setting up a lightly parameterised function shaped by human can be forgotten. Instead, it allows us to set up a highly parameterised function that is very flexible and will be conveniently shaped during the learning phase. To put it simply, a deep learning model automatically learns complex functions that map inputs to outputs and rules out the need to use hand-crafted features (Singh et al., 2016, i639–i648). Since the input data of this project has a very large feature dimension, neural network is considered as one of the suitable approaches.
+
+![Neural networks in the human brain](fig 1.png)
+
+The idea of neural network came from the most interesting organ in the human body, the brain. The human brain is made up of billions of basic units called neurons. **Figure 1** illustrates the basic neuron unit. The neuron is made up of dendrites, a cell body and an axon connecting to axon terminals. The brain will receive information or inputs which are then transferred into the cell body through dendrites. The cell body works as the processing unit, where all the learnt information is then transferred into outputs and passed down by the axon. The muscles then receive the outputs from the axon terminals for actions. McCulloch and Pitts first studied this concept in 1943 to form a mathematical model (Bakar et al., 2009).
+
+![Hidden layers of a network](fig 2.png)
+
+**Figure 2** shows a one hidden layer feed forward network with inputs $x_1,…,x_i,$ and output $y_k$. Each input has its own synaptic weight. The weights are then passed onto the hidden layer, which consists of several hidden neurons. A weighted summation of the inputs is performed by each neuron and then it passes a nonlinear activation function.
+
+
+### 2.2.2 Random Forest
+Over the years, random forests have become a prominently used technique in the field of biology and bioinformatics. Some fields where random forests are used are in classifying different types of samples using gene expression, identifying diseases associated with particular genes and others (Cutler et al., 2012). 
+
+![Single decision tree vs. Random Forest](fig 4.png)
+
+A random forest is popularly known to be a classification algorithm that selects features randomly. It also utilises the concept of bagging samples and majority voting scheme, that make it better than decision trees (Cutler et al., 2012). Additionally, a random forest is a collection of many decision trees as seen in **Figure 3**, which is capable of classification and regression tasks. The learning process incorporates feature selection and interactions naturally (Qi, 2012). 
+
+Computational biology makes use of random forests as it works best with complex and multidimensional data (Qi, 2012). Moving to the advantages of using the random forest technique, this machine learning algorithm works best in large and high dimensional data which is very well suited in the context of our project. A large random forest is preferable as it accounts for a robust model, with better accuracy and predictive capabilities. It focuses on selecting the best variable for prediction, and can easily help with identifying variables that aren't very significant to the model. Bootstrapping and ensemble schemes prevent the model from overfitting and hence, pruning trees is not required. Another advantage is that this algorithm accounts for missing values in the data and continues to maintain accuracy (Hsueh et al., 2013). 
+
+A step further is to implement eXtreme gradient boosting or XGBoost (XGB), which is basically gradient boosted decision trees designed for speed and performance. The algorithm that is featured in XGB is that of gradient boosting, which is a popular supervised learning algorithm. This algorithm aims to predict a specific variable based on estimates of other models. With great computational and executional speed, it implements gradient boosting very fast with high efficiency and accuracy. This reflects it’s modelling capabilities and it has become a highly preferential method for any regression and classification prediction problems (Chen et al., 2015).
 
 # 3 Data Analysis
 ## 3.1 Exploration of the Gene Expression Data and Tissue Donor Metadata
@@ -184,14 +219,14 @@ library("pheatmap")
 
 To visualise the count of overlapping donors between all possible pairs of tissues, a matrix is created to tabulate the count of overlapping donors for all pairs of tissues. It is a 54 x 54 square matrix, in which the row and column names correspond to the tissue names.  
 
-```{r figs1, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs1}Heatmap representing no. of overlapping donors for each tissue pair" }
+```{r figs4, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs4}Heatmap representing no. of overlapping donors for each tissue pair" }
 pheatmap(tissue_donor_count, main="Heatmap of Donor Overlap Counts in All Pairs of Tissues")
 ```
 
 
-In this symmetrical matrix, rows and columns are clustered by similarity in terms of donor overlap. Since each element in **Figure 1** is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most overlapping donors. 
+In this symmetrical matrix, rows and columns are clustered by similarity in terms of donor overlap. Since each element in **Figure 4** is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most overlapping donors. 
 
-From **Figure 1**, Whole Blood and Muscle - Skeletal is one example of two tissues that have a high count of overlapping donors. On the other hand, Kidney - Medulla and Pancreas pair has an extremely low count of overlapping donors. The diagonal stands out as it gives the total count of overlapping donors per tissue. Muscle - Skeletal is the tissue with the highest number of donors whereas Kidney - Medulla seems to have the lowest number of donors. 
+From **Figure 4**, Whole Blood and Muscle - Skeletal is one example of two tissues that have a high count of overlapping donors. On the other hand, Kidney - Medulla and Pancreas pair has an extremely low count of overlapping donors. The diagonal stands out as it gives the total count of overlapping donors per tissue. Muscle - Skeletal is the tissue with the highest number of donors whereas Kidney - Medulla seems to have the lowest number of donors. 
 
 As for the clustering, the resulting heatmap has clustered similar tissues close to each other based on overlapping count of donors. A portion of the bottom right quadrant (starting from Muscle - Skeletal row and column) displays a cluster that has the highest number of overlapping donors.The rest of the heatmap has clustered tissues that display an average to low count of overlapping donors. 
 
@@ -201,13 +236,13 @@ Here, a matrix is created to tabulate the proportion of donors for all pairs of 
 In this proportion matrix, it can be observed that all diagonal elements will be equal to 1 since those cells represent the total proportion of donors per tissue. However, this matrix is non-symmetrical because every non-diagonal element corresponds to a different row tissue and a different column tissue while calculating the proportion per element. Each of them take a value between 0 and 1 inclusive and can be expressed in terms of percentages. For example, the proportion of overlapping donors between Liver and Whole Blood is 0.241 i.e overlapping donors between Liver and Whole Blood donors make up 24.1% of Whole Blood donors.
 
 
-```{r figs2, fig.height=20, fig.width=20, echo=FALSE, fig.cap="\\label{fig:figs2}Heatmap representing proportion of overlapping donors for each tissue pair"}
+```{r figs5, fig.height=20, fig.width=20, echo=FALSE, fig.cap="\\label{fig:figs5}Heatmap representing proportion of overlapping donors for each tissue pair"}
 pheatmap(tissue_donor_proportion, main="Heatmap of Donor Overlap Proportions in All Pairs of Tissues")
 ```
 
-Every cell that is coloured red in **Figure 2** denotes full proportion which is the proportion of the tissue to itself, or extremely high proportion. The other cells are likely to be values lesser than 1. 
+Every cell that is coloured red in **Figure 5** denotes full proportion which is the proportion of the tissue to itself, or extremely high proportion. The other cells are likely to be values lesser than 1. 
 
-It is important to note that every column tissue acts as a numerator and every row tissue is the denominator. The column tissue's proportion is based on the number of overlapping donors shared with the row tissue and is divided by the total donors a row tissue contains. For example: according to **Figure 2**, the proportion of overlapping donors between Liver and Whole Blood is very high. Subsequently, the proportion of overlapping doors between Whole Blood and Liver is comparatively lower. 
+It is important to note that every column tissue acts as a numerator and every row tissue is the denominator. The column tissue's proportion is based on the number of overlapping donors shared with the row tissue and is divided by the total donors a row tissue contains. For example: according to **Figure 5**, the proportion of overlapping donors between Liver and Whole Blood is very high. Subsequently, the proportion of overlapping doors between Whole Blood and Liver is comparatively lower. 
 
 As for the clustering, there is an obvious cluster starting from the leftmost column up to the Esophagus - Muscularis column, which means that the donors of each column tissue make up high percentages of donors in almost all row tissues. The row tissues have also been clustered in such a way that the top most row tissues have the least proportion of overlapping donors, but as we go down the row, the proportion increases. 
 
@@ -260,7 +295,7 @@ library(RColorBrewer)                            # Load RColorBrewer
 ```
 
 
-```{r figs3, echo=FALSE, fig.cap="\\label{fig:figs3}Bar plot representing the proportion of overlapping donors of all tissues with whole blood"}
+```{r figs6, echo=FALSE, fig.cap="\\label{fig:figs6}Bar plot representing the proportion of overlapping donors of all tissues with whole blood"}
 ggplot(data=whole_blood_column_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Donors of all Tissues with Whole Blood") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -274,7 +309,7 @@ ggplot(data=whole_blood_column_donor, aes(x=reorder(subtissue,-proportion), y=pr
 
 ```
 
-```{r figs4, echo=FALSE, fig.cap="\\label{fig:figs4}Bar plot representing the proportion of overlapping donors of whole blood with other tissues"}
+```{r figs7, echo=FALSE, fig.cap="\\label{fig:figs7}Bar plot representing the proportion of overlapping donors of whole blood with other tissues"}
 ggplot(data=whole_blood_row_donor, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Donors of Whole Blood with all other Tissues") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -290,9 +325,9 @@ ggplot(data=whole_blood_row_donor, aes(x=reorder(subtissue,-proportion), y=propo
 
 ```
 
-**Figure 4** depicts the proportion of overlapping donors of Whole Blood in all other Tissues. Muscle - Skeletal has the highest proportion of overlapping donors with Whole Blood whereas, Kidney - Medulla has the least. It gives us a picture of how many Whole Blood donors have also donated other tissues. 
+**Figure 7** depicts the proportion of overlapping donors of Whole Blood in all other Tissues. Muscle - Skeletal has the highest proportion of overlapping donors with Whole Blood whereas, Kidney - Medulla has the least. It gives us a picture of how many Whole Blood donors have also donated other tissues. 
 
-Note: **Figure 4** considers Whole Blood as the denominator. 
+Note: **Figure 7** considers Whole Blood as the denominator. 
 
 ### 3.1.3 The count of shared genes between all pairs of tissue samples  
 
@@ -302,14 +337,16 @@ We observe that the diagonal elements of this matrix give us the total count of 
 
 
 
-```{r figs5, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs5}Heatmap representing the count of overlapping genes in all tissue pairs"}
+```{r figs8, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs8}Heatmap representing the count of overlapping genes in all tissue pairs"}
 pheatmap(shared_gene_count, main="Heatmap of Overlapping Gene Count in All Pairs of Tissues")
 ```
-**Figure** 5 is a visual representation of the count matrix described above, in which the rows and columns represent all 54 tissues. In this symmetrical matrix rows and columns are clustered by similarity in terms of shared genes. Since each element in the resulting count matrix is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most count of shared genes.
+
+
+**Figure 8**  is a visual representation of the count matrix described above, in which the rows and columns represent all 54 tissues. In this symmetrical matrix rows and columns are clustered by similarity in terms of shared genes. Since each element in the resulting count matrix is represented by a colour in the heatmap, it is easy to identify the tissue pairs with the least and most count of shared genes.
 
 From this heatmap, Brain - Cortex and Brain - Frontal Cortex (BA9)  is one example of two tissues that have a high count of shared genes. Additionally, Liver and Brain - Cerebellar is an example of a tissue pair that has an extremely low count of shared genes. The diagonal in the heatmap stands out since it denotes the total count of genes of a tissue. Testis is the tissue with the highest number of expressed genes and Liver seems to have the lowest count of genes. 
 
-As for the clustering, we observe that similar row tissues and column tissues are clustered close to each other, according to count of shared genes. The middle portion of **Figure 5**, coloured in shades of red is a cluster that has a high to average count of shared genes. The rest of the heatmap has clustered tissues with low count of shared genes.
+As for the clustering, we observe that similar row tissues and column tissues are clustered close to each other, according to count of shared genes. The middle portion of **Figure 8**, coloured in shades of red is a cluster that has a high to average count of shared genes. The rest of the heatmap has clustered tissues with low count of shared genes.
 
 ### 3.1.4 The proportion of shared genes between all pairs of tissue samples 
 
@@ -317,16 +354,18 @@ To obtain the appropriate heatmap, a matrix that records the proportion of share
 
 The diagonal elements of this proportion matrix will all be equal to 1, as they represent the total proportion of genes per tissue. This resulting proportion matrix will be non-symmetrical.
 
-```{r figs6, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs6}Heatmap representing the proportion of overlapping genes in all tissue pairs"}
+```{r figs9, fig.width=20, fig.height=20, echo=FALSE, fig.cap="\\label{fig:figs9}Heatmap representing the proportion of overlapping genes in all tissue pairs"}
 pheatmap(shared_gene_proportion, main="Heatmap of Overlapping Gene Proportions in All Pairs of Tissues")
 ```
-**Figure 6** gives a graphical representation of the proportion of shared genes in different pairs of tissues, in which all rows and columns represent all 54 tissues. Every cell that is coloured red denotes full proportion which is the proportion of genes of the tissue to itself or a very high proportion. The other cells are likely to be values lesser than 1. 
+
+
+**Figure 9** gives a graphical representation of the proportion of shared genes in different pairs of tissues, in which all rows and columns represent all 54 tissues. Every cell that is coloured red denotes full proportion which is the proportion of genes of the tissue to itself or a very high proportion. The other cells are likely to be values lesser than 1. 
 
 In this heatmap, we consider the column tissues as numerators and row tissues as denominators. While calculating each proportion, the number of genes shared between the column tissue and row tissue is divided by the total genes expressed in the row tissue. According to the heatmap above, the proportion of shared genes between Testis and every other tissue seems to be on the lower side. This is a salient outlier that can be noticed straight away. On the other hand, the proportion of shared genes of every other tissue with Testis is fairly high.
 
 In terms of clustering, all similar gene proportions have been clustered together in the rows and columns. Majority of the heatmap is shades of red - which signifies that those column tissues make up a large proportion of their corresponding row tissues. Similarly, the portion of the bottom right quadrant, shaded in blue, denotes that the column tissues make up a small proportion of their corresponding row tissues.  
 
-```{r figs7, echo=FALSE, fig.cap="\\label{fig:figs7}Bar plot representing the proportion of overlapping genes of all tissues with whole blood"}
+```{r figs10, echo=FALSE, fig.cap="\\label{fig:figs10}Bar plot representing the proportion of overlapping genes of all tissues with whole blood"}
 ggplot(data=whole_blood_column_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Genes of all Tissues with Whole Blood") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -340,10 +379,10 @@ ggplot(data=whole_blood_column_gene, aes(x=reorder(subtissue,-proportion), y=pro
 
 ```
 
-**Figure 7** is a visualisation of all overlapping genes of other Tissues with Whole Blood. Here, we observe that the proportion of shared genes of Testis and Whole Blood is the least. Whole Blood and Cervix - Ectocervix has the highest proportion of shared genes in this case.
+**Figure 10** is a visualisation of all overlapping genes of other Tissues with Whole Blood. Here, we observe that the proportion of shared genes of Testis and Whole Blood is the least. Whole Blood and Cervix - Ectocervix has the highest proportion of shared genes in this case.
 
 
-```{r figs8, echo=FALSE, fig.cap="\\label{fig:figs8}Bar plot representing the proportion of overlapping genes of whole blood with all other tissues"}
+```{r figs11, echo=FALSE, fig.cap="\\label{fig:figs11}Bar plot representing the proportion of overlapping genes of whole blood with all other tissues"}
 ggplot(data=whole_blood_row_gene, aes(x=reorder(subtissue,-proportion), y=proportion, fill = tissue)) +
   ggtitle("Proportion of Overlapping Genes of Whole Blood with all other Tissues") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -357,9 +396,9 @@ ggplot(data=whole_blood_row_gene, aes(x=reorder(subtissue,-proportion), y=propor
 
 ```
 
-**Figure 8** shows the proportion of shared genes of Whole Blood with all other tissues. The Spleen has the highest proportion of shared genes, which are also found in Whole Blood. The proportion of shared genes in Liver and Whole Blood is the least amongst the lot. 
+**Figure 11** shows the proportion of shared genes of Whole Blood with all other tissues. The Spleen has the highest proportion of shared genes, which are also found in Whole Blood. The proportion of shared genes in Liver and Whole Blood is the least amongst the lot. 
 
-Note: **Figure 8** considers Whole Blood as the denominator. 
+Note: **Figure 11** considers Whole Blood as the denominator. 
 
 
 ```{r echo=FALSE}
@@ -373,12 +412,12 @@ Furthermore, to investigate the tissues that are the most similar to Whole Blood
 
 1. List of the top 10 tissues that share most of its donors with Whole Blood 
 
-```{r}
+```{r echo=FALSE}
 whole_blood_row_donor_top10[,c(1,3)]
 ```
 
 2. List of the top 10 tissues that share most of its genes with Whole Blood
-```{r}
+```{r echo=FALSE}
 whole_blood_row_gene_top10[,c(1,3)]
 ```
 
@@ -493,7 +532,7 @@ library(ggplot2)
 
 ```
 
-```{r figs9, echo=FALSE, fig.cap="\\label{fig:figs9}Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes"}
+```{r figs12, echo=FALSE, fig.cap="\\label{fig:figs12}Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes"}
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global_tissue)) +
   ggtitle("Mean Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -509,11 +548,11 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean), y=mean, fill = global
 
 
 
-**Figure 9** captures the mean correlation between a particular tissue with Whole Blood, based on their shared genes.  
+**Figure 12** captures the mean correlation between a particular tissue with Whole Blood, based on their shared genes.  
 
 
 
-```{r figs10, echo=FALSE, fig.cap="\\label{fig:figs10}Median Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+```{r figs13, echo=FALSE, fig.cap="\\label{fig:figs13}Median Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = global_tissue)) +
   ggtitle("Median Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -529,19 +568,19 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median), y=median, fill = gl
 
 
 
-**Figure 10** captures the median correlation between particular tissue and Whole Blood, based on their shared genes. 
+**Figure 13** captures the median correlation between particular tissue and Whole Blood, based on their shared genes. 
 
 
 The mean correlation and median correlation can help us to predict the how high or low the count of a particular shared gene in a tissue will be, when the expression of the same gene is known in Whole Blood. It must be considered as just an approximation of how high or low the count will be, and not as a determined factor.
 
-According to **Figure 9** and **Figure 10**, we see that Spleen has the highest mean and median correlation with Whole blood. On the other hand, Cells - Cultured Fibroblasts have the least mean and median correlations with Whole Blood. It is also observed that all the individual tissues captured under 'Brain' have similar mean and median correlation values. Overall we can conclude that in this case, mean correlation and median correlation behave similarly. A closer look at each value of mean and median correlation values for each tissue suggests that they are roughly equal to each other. 
+According to **Figure 12** and **Figure 13**, we see that Spleen has the highest mean and median correlation with Whole blood. On the other hand, Cells - Cultured Fibroblasts have the least mean and median correlations with Whole Blood. It is also observed that all the individual tissues captured under 'Brain' have similar mean and median correlation values. Overall we can conclude that in this case, mean correlation and median correlation behave similarly. A closer look at each value of mean and median correlation values for each tissue suggests that they are roughly equal to each other. 
 
 
 Next, to  understand the strength of the relationship between the tissue and Whole Blood we calculated summary statistics for the absolute correlation.
 
 Now considering the absolute correlation values, the following plots are produced: 
 
-```{r figs11, echo=FALSE, fig.cap="\\label{fig:figs11}Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+```{r figs14, echo=FALSE, fig.cap="\\label{fig:figs14}Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill = global_tissue)) +
   ggtitle("Mean of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -558,11 +597,11 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-mean_abs), y=mean_abs, fill 
 
 
 
-**Figure 11** represents the mean of absolute correlation between a tissue and Whole Blood, based on their shared genes. 
+**Figure 14** represents the mean of absolute correlation between a tissue and Whole Blood, based on their shared genes. 
 
 
 
-```{r figs12, echo=FALSE, fig.cap="\\label{fig:figs12}Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
+```{r figs15, echo=FALSE, fig.cap="\\label{fig:figs15}Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes" }
 ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, fill = global_tissue)) +
   ggtitle("Median  of Absolute Correlation of a Tissue and Whole Blood, based on their Shared Genes") + 
   xlab("Sub-Tissues") + ylab("Proportion") +
@@ -579,11 +618,11 @@ ggplot(data=corr_stats_list, aes(x=reorder(tissueX,-median_abs), y=median_abs, f
 
 
 
-**Figure 12** captures the median of absolute correlation between a tissue and Whole Blood, based on their shared genes.
+**Figure 15** captures the median of absolute correlation between a tissue and Whole Blood, based on their shared genes.
 
 In the context of this section, the absolute correlation is a measure that denotes the strength of the relationship between the tissue and Whole Blood, based on their shared genes. The direction of the relationship between the two is not accounted for while using absolute correlation. For each of the shared genes, we then take the absolute correlation and then continue to aggregate it using mean and median to get a summarised picture. 
 
-From **Figure 11** and **Figure 12**, we can see that Kidney - Medulla has the strongest relationship with Whole Blood, based on their shared genes. Furthermore, Cells - Cultured Fibroblasts share the weakest relationship with Whole Blood. All tissues in the brain have roughly the same strength of relationship between Whole Blood. This can lead us to further conclude that the of mean and median of absolute correlation are roughly are the same values for each tissue. 
+From **Figure 14** and **Figure 15**, we can see that Kidney - Medulla has the strongest relationship with Whole Blood, based on their shared genes. Furthermore, Cells - Cultured Fibroblasts share the weakest relationship with Whole Blood. All tissues in the brain have roughly the same strength of relationship between Whole Blood. This can lead us to further conclude that the of mean and median of absolute correlation are roughly are the same values for each tissue. 
 
 ### 3.2.2 Correlation of each gene found in Whole Blood across all other tissues
 
@@ -611,7 +650,7 @@ mean_correlation_gene$mean = all_mean
 
 The second part of the section explores how each gene found in Whole Blood is correlated to the same gene found other Tissues. For this section, we will utilise mean correlation and median correlation to summarise the overall picture. Density plots are used also to graphically represent the findings. 
 
-```{r figs13, echo=FALSE, fig.cap="\\label{fig:figs13}Mean Correlation of Each Gene of Whole Blood with all other Tissues" }
+```{r figs16, echo=FALSE, fig.cap="\\label{fig:figs16}Mean Correlation of Each Gene of Whole Blood with all other Tissues" }
 ggplot(data = mean_correlation_gene, aes(x = mean)) + 
   ggtitle("Mean Correlation of Each Gene of Whole Blood with all other Tissues") + 
   geom_density()
@@ -619,7 +658,7 @@ ggplot(data = mean_correlation_gene, aes(x = mean)) +
 
 
 
-**Figure 13** represents the distribution of the mean correlation of all genes found in Whole Blood with all other tissues. The peak observed in this density plot suggests that the overall mean correlation is positive. While some genes of some tissues may be highly correlated with the genes of Whole Blood, not all of them are.  
+**Figure 16** represents the distribution of the mean correlation of all genes found in Whole Blood with all other tissues. The peak observed in this density plot suggests that the overall mean correlation is positive. While some genes of some tissues may be highly correlated with the genes of Whole Blood, not all of them are.  
 
 ```{r echo=FALSE}
 mean_abs_correlation_gene = data.frame(gene=blood_shared_genes_unique, mean=NA)
@@ -644,7 +683,7 @@ mean_abs_correlation_gene$mean = all_mean
 
 ```
 
-```{r figs14, echo=FALSE, fig.cap="\\label{fig:figs14}Mean Absolute Correlation of Each Gene of Whole Blood with all other Tissues" }
+```{r figs17, echo=FALSE, fig.cap="\\label{fig:figs17}Mean Absolute Correlation of Each Gene of Whole Blood with all other Tissues" }
 ggplot(data = mean_abs_correlation_gene, aes(x = mean)) + 
   ggtitle("Mean Absolute Correlation of Each Gene of Whole Blood with all other Tissues") + 
   geom_density()
@@ -652,7 +691,7 @@ ggplot(data = mean_abs_correlation_gene, aes(x = mean)) +
 
 
 
-Since **Figure 14** considers absolute correlation of each gene in Whole Blood with the same gene found in all other tissues, the x axis has a lower bound at zero. The majority of genes in other tissues have a correlation of about 0.10, but a very small number of them have a strong correlation.
+Since **Figure 17** considers absolute correlation of each gene in Whole Blood with the same gene found in all other tissues, the x axis has a lower bound at zero. The majority of genes in other tissues have a correlation of about 0.10, but a very small number of them have a strong correlation.
 
 
 ```{r echo=FALSE}
@@ -701,7 +740,7 @@ rank_df$avg_rank = (rank_df$rank_donor + rank_df$rank_gene + rank_df$rank_corr)/
 
 Finally, to acquire selection of the best tissues across all measures, we rank tissues based on three different measures: proportion of overlapping donors, proportion of shared genes and correlation between expression levels. The rank per tissue per measure is averaged out to give us the final rank it holds. 
 
-The following list and bar plot represent the top tissues with the highest proportion of overlapping donors, proportion of shared genes and correlation. These are the best tissues to be chosen across all measures:
+The following list and **Figure 18** represent the top tissues with the highest proportion of overlapping donors, proportion of shared genes and correlation. These are the best tissues to be chosen across all measures:
 
 ```{r echo=FALSE}
 rank_df_sorted = rank_df[order(rank_df$avg_rank), ]
@@ -709,7 +748,7 @@ head(rank_df_sorted)
 ```
 
 
-```{r figs15, echo=FALSE, fig.cap="\\label{fig:figs15}Overall Ranking of Tissues across all Measures" }
+```{r figs18, echo=FALSE, fig.cap="\\label{fig:figs18}Overall Ranking of Tissues across all Measures" }
 ggplot(data=rank_df_sorted, aes(x=reorder(subtissue, avg_rank), y=avg_rank, fill = subtissue)) +
   ggtitle("Overall Ranking of Tissues across all Measures") + 
   xlab("Sub-Tissues") + ylab("Rank") +
@@ -737,4 +776,185 @@ Not necessarily having the lowest rank, some tissues are chosen as the starting 
 
 
 # 4 Proposal
+Using Lung as the starting point, we want to use the gene expression from Whole Blood as the input for the models and the gene expression from Lung as the output. Below we will discuss the sample size and the methods.
+
+## 4.1 Sample Size
+This section aims at selecting appropriate sample size for training, validation and test sets defined for the chosen tissues i.e. Lung, Skin - Not sun exposed, and Nerve - Tibial. 
+The type of sets involved are: 
+
+1. Training set: the samples belonging to this set will be used to create the model. It is typically the set with the largest sample size. 
+2. Validation set: this set will be used to tune the parameters of the model and to further optimise it. Furthermore, this set will also be used to choose the best model between the 2 models (Random Forest and Neural Network) which are going to be further discussed in the next subsection.
+3. Test set: the model is finally run on this set, which it has never seen. It is used to assess the performance of the model and the accuracy of results. 
+
+We could not find a strong agreement after referring various sources and published papers on selecting appropriate proportion to define Training, Validation and Test sets. Hence, our approach to choosing the correct proportions for the sets was to ensure that each one of them has an ample amount of donors. Choosing an arbitrary number of 30 samples, our main aim is to ensure that the test set (the smallest across the three) must have a sample size of at least 30 donors overlapping with Whole Blood. 
+
+
+
+```{r echo=FALSE}
+library(ggplot2)
+suppressPackageStartupMessages(library("tidyr"))  # Disable messages
+```
+
+```{r echo=FALSE}
+expression_list <- list()
+# expression_list contains expressions from all tissues, the column is the shared subjects with WB
+
+j = 1
+for (df_other in tissue_list) {
+ 
+  rownames(df_other$cpm_tmm) <- df_other$genes$gene_id 
+  colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID 
+    
+  shared_genes <- df_blood$genes$gene_id[df_blood$genes$gene_id%in%df_other$genes$gene_id] 
+  shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
+  
+    
+  exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
+  exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
+  
+  expression_list[[j]] = as.data.frame(exp_other)
+  
+  
+  j = j + 1
+}
+
+```
+
+```{r echo=FALSE}
+prop_7_2_1 = data.frame(tissue=tissue_names, total=NA, train=NA, val=NA, test=NA)
+
+
+for (i in 1:(length(expression_list)-1)) {
+  df = expression_list[[i]]
+  total = ncol(df)
+  train = round(0.7*total)
+  val = round(0.2*total)
+  test = total - train - val
+  
+  prop_7_2_1$total[i] = total
+  prop_7_2_1$train[i] = train
+  prop_7_2_1$val[i] = val
+  prop_7_2_1$test[i] = test
+  
+}
+```
+
+```{r echo=FALSE}
+prop_7_2_1_long = prop_7_2_1 %>% pivot_longer(c(train, val, test), names_to="set", values_to="value")
+```
+By the method of trial and error, random sets of proportions were tried and tested on the chosen tissues. The proportions that work the best for modelling the three chosen tissues are: 
+
+1. Training set: 0.7 or 70% 
+2. Validation set: 0.2 or 20% 
+3. Test set: 0.1 or 10% 
+
+In **Figure 19**, we can see that for each tissue, the test set comfortably exceeds the count of 30 donors. Hence, we can conclude that 0.7-0.2-0.1 is a suitable proportion for the sets. 
+
+
+```{r echo=FALSE}
+prop_3_tissues = prop_7_2_1_long[c(109,110,111,118,119,120,133,134,135),]
+prop_3_tissues$set[prop_3_tissues$set=='train'] = '1train'
+prop_3_tissues$set[prop_3_tissues$set=='val'] = '2val'
+prop_3_tissues$set[prop_3_tissues$set=='test'] = '3test'
+label = rep(c("Train", "Val", "Test"), 3)
+```
+
+```{r figs19, echo=FALSE, fig.cap="\\label{fig:figs19}Count of samples per set for chosen tissues"}
+ggplot(data=prop_3_tissues, aes(x=set, y=value, fill = tissue)) +
+  ggtitle("Sample Sizes for Train, Validation, and Test Set") + 
+  xlab("Set") + ylab("Size") +
+  theme(axis.text.x = element_text(hjust=1, angle = 30, size=10),
+        legend.text = element_text(size=5),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.position='bottom') +
+
+  geom_bar(stat="identity", show.legend=FALSE) +
+  geom_text(aes(label=value), size = 3, vjust=-0.5)+
+  facet_wrap(~tissue)
+```
+
+## 4.2 Methods
+### 4.2.1 Model Deployment
+**Neural Network**
+Using the keras_model_sequential() function from 'keras' library, we will create and compile the model. The input will be a matrix of the gene expression of whole blood and the output will be a matrix of the gene expression prediction of lung. The visualisation of the expected neural network model is shown in **Figure 20**. Note that the number of hidden layers is yet to be decided, and it is for visualisation purpose only. Same thing applies for the number of input and output nodes. The number of input and output nodes in the real model will depend on the number of shared genes between whole blood and the other tissue.
+
+![An snapshot of GTex data as a neural network](fig 3.png)
+
+**Random Forest**
+
+Here, we will implement eXtreme gradient boosting or XGBoost (XGB). It is easily available and installable as a software package on R, in ‘caret’ and ‘xgboost’ packages. The input will be a matrix of the gene expression of Whole Blood and the expected output is a random forest of the best predictors for gene expression in the other tissue. The model will be built with the XGB package, using the training set and tuned for better results over the validation set.
+
+
+### 4.2.2 Model Fine Tuning
+For both models, we will tune the models' parameters using the validation set. If possible (given the time and computational power limitation), we are planning to do an n-fold cross validation to get a more accurate and non-biased results.
+
+### 4.2.3 Final Model Testing
+From the previous section's results, we will take the best model from each proposed model (i.e. one best neural network model and one best random forest model), and test it on the test set. The best model among the two models will be chosen to move forward to further process.
+
+
+
+
+
+
+
+
 # 5 Timeline
+## 5.1 Achieved
+**Week of 26 April 2021**: Id matching & batch cleaning
+- Understanding what links information from multiple tissues to the tissue donors
+- Exploring gene expression profiles in all tissues
+- Understanding whether clustering based on information available is occurring and how to solve it
+
+**Week of 3, 10 May 2021 (2 weeks)**: Exploration of tissues similarity and gene expression correlation in GTEx V8 
+- Most tissue similarity and correlation has been performed using previous versions of GTEx so this step helped understand the extent and structure of the dataset
+- Similarity scores, correlation, hierarchical clustering, plotting are performed here.
+
+**Week of 17 May 2021**: Selection of tissues and sample sizes for training, validation and test sets
+- In GTEx, sample sizes vary according to tissue type and blood is the largest sample size. The appropriate sample size for training, validation and test sets is defined for each tissue. 
+
+**Week of 24 May 2021**: Proposal of a number of methods and discussion of such methods
+- Selecting 2 methods and defending the selected methods
+
+**Week of 31 May 2021 - 19 July 2021**: Pause
+
+## 5.2 Plan
+**Week of 26 July, 2, 9, 16 August 2021 (4 weeks)**: Deployment of all the proposed methods in different tissues
+- Each member will then deploy their method on a few selected tissues (approx. 10 tissues with the largest sample sizes). We will then tune the models to each of the tissues on the validation sets and produce comparable results
+
+**Week of 23 August 2021**: Benchmarking of the methods and selection of a final methodology
+- Compare the methods against each other and describe which one should be used for the final deployment
+
+**Week of 30 August, 6, 13 September 2021 (3 weeks)**: Deployment of the final methodology and fine tuning on validation 
+- The chosen method will be deployed on all tissues and finely tuned to each tissue
+
+**Week of 20 September 2021**: Mid semester break
+
+**Week of 27 September 2021**: Assessment of the final methodology and the test set 
+- The final tuned models will be deployed to the test sets and the final conclusion will be drawn
+
+**Week of 4, 11 October 2021 (2 weeks)**: Exploration and description of the results
+- Collection, summary, reportage and presentation of the final results will be performed. The students will present at both CSL and WEHI seminar as a team.
+
+**Week of 18 October 2021**: Development of a user friendly algorithm
+- The student will clean the final algorithm script and make it as user friendly as possible for future deployment.
+
+
+# Bibliography 
+
+Albawi, S., Mohammed, T. A., & Al-Zawi, S. (2017). Understanding of a convolutional neural network. IEEE. https://doi.org/10.1109/ICEngTechnol.2017.8308186 
+
+Bakar, N. M. A., & Tahir, I. M. (2009). Applying multiple linear regression and neural network to predict bank performance. International Business Research, 2(4), (pp.176-183). https://doi.org/10.5539/ibr.v2n4p176
+
+Chen, T., He, T., Benesty, M., Khotilovich, V., Tang, Y., & Cho, H. (2015). Xgboost: extreme gradient boosting. R package version 0.4-2, 1(4).
+
+Cutler, A., Cutler, D. R., & Stevens, J. R. (2012). Random forests. In Ensemble machine learning (pp. 157-175). Springer, Boston, MA. https://doi.org/10.1007/978-1-4419-9326-7_5 
+
+Hsueh, H. M., Zhou, D. W., & Tsai, C. A. (2013). Random forests-based differential analysis of gene sets for gene expression data. Gene, 518(1), 179-186. https://doi.org/10.1016/j.gene.2012.11.034 
+
+
+Qi, Y., Oja, M., Weston, J., & Noble, W. S. (2012). A unified multitask architecture for predicting local protein properties. PloS one, 7(3). https://doi.org/10.1371/journal.pone.0032235 
+
+
+Qi, Y. (2012). Random forest for bioinformatics. In Ensemble machine learning (pp. 307-323). Springer, Boston, MA.https://doi.org/10.1007/978-1-4419-9326-7_11 
+
+Singh, R., Lanchantin, J., Robins, G., & Qi, Y. (2016). DeepChrome: deep-learning for predicting gene expression from histone modifications. In Bioinformatics (Vol. 32, pp. i639–i648). https://doi.org/10.1093/bioinformatics/btw427
