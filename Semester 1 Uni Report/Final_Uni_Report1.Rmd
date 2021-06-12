@@ -893,6 +893,7 @@ ggplot(data=prop_3_tissues, aes(x=set, y=value, fill = tissue)) +
 ## 4.2 Methods
 ### 4.2.1 Model Deployment
 **Neural Network**
+
 Using the keras_model_sequential() function from 'keras' library, we will create and compile the model. The input will be a matrix of the gene expression of whole blood and the output will be a matrix of the gene expression prediction of lung. The visualisation of the expected neural network model is shown in **Figure 20**. Note that the number of hidden layers is yet to be decided, and it is for visualisation purpose only. Same thing applies for the number of input and output nodes. The number of input and output nodes in the real model will depend on the number of shared genes between whole blood and the other tissue.
 
 ![An snapshot of GTex data as a neural network](fig 3.png)
@@ -913,7 +914,7 @@ From the previous section's results, we will take the best model from each propo
 # 5 Timeline
 ## 5.1 Achieved
 
-1. **Week 1 (26 Apr 2021 - 30 Apr 2021**: Id matching & batch cleaning
+1. **Week 1 (26 Apr 2021 - 30 Apr 2021)**: Id matching & batch cleaning
 + Understanding what links information from multiple tissues to the tissue donors.
 + Exploring gene expression profiles in all tissues.
 + Understanding whether clustering based on information available is occurring and how to solve it.
@@ -941,16 +942,18 @@ From the previous section's results, we will take the best model from each propo
 4. **Week 14 (27 Sep 2021 - 1 Oct 2021)**: Assessment of the final methodology and the test set 
 + The final tuned models will be deployed to the test sets and the final conclusion will be drawn.
 
-5. **Week 15 (4 Oct 2021 - 8 Oct 2021)**: Exploration and description of the results
+6. **Week 15-16 (4 Oct 2021 - 15 Oct 2021)**: Exploration and description of the results
 + Collection, summary, reportage and presentation of the final results will be performed. The students will present at both CSL and WEHI seminar as a team.
 
-6. **Week 16-17 (11 Oct 2021 - 22 Oct 2021)**: Development of a user friendly algorithm
+7. **Week 17-18 (18 Oct 2021 - 29 Oct 2021)**: Development of a user friendly algorithm
 + The student will clean the final algorithm script and make it as user friendly as possible for future deployment.
 
 
 # Bibliography 
 
 Albawi, S., Mohammed, T. A., & Al-Zawi, S. (2017). Understanding of a convolutional neural network. IEEE. https://doi.org/10.1109/ICEngTechnol.2017.8308186 
+
+Al Bkhetan, Z. (2020). Optimisation of phasing: towards improved haplotype-based genetic investigations (Doctoral dissertation, pp. 10-13). http://hdl.handle.net/11343/258861
 
 Bakar, N. M. A., & Tahir, I. M. (2009). Applying multiple linear regression and neural network to predict bank performance. International Business Research, 2(4), (pp.176-183). https://doi.org/10.5539/ibr.v2n4p176
 
@@ -967,6 +970,3 @@ Qi, Y., Oja, M., Weston, J., & Noble, W. S. (2012). A unified multitask architec
 Qi, Y. (2012). Random forest for bioinformatics. In Ensemble machine learning (pp. 307-323). Springer, Boston, MA.https://doi.org/10.1007/978-1-4419-9326-7_11 
 
 Singh, R., Lanchantin, J., Robins, G., & Qi, Y. (2016). DeepChrome: deep-learning for predicting gene expression from histone modifications. In Bioinformatics (Vol. 32, pp. i639–i648). https://doi.org/10.1093/bioinformatics/btw427
-
-Al Bkhetan, Z. (2020). Optimisation of phasing: towards improved haplotype-based genetic investigations (Doctoral dissertation, pp. 10-13). http://hdl.handle.net/11343/258861 
-
