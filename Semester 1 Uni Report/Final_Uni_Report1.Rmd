@@ -1,18 +1,35 @@
 ---
-title: "Final Report - Data Science Project pt. 1"
+title: Data Science Project Pt. 1 (MAST90106)
+subtitle: Final Report, Semester 1 
 author:
   - Kartika Waluyo, 1000555
   - Vrinda Rajendar Rajanahally, 1129446
 output: 
   pdf_document:
     fig_caption: TRUE
+    
 ---
+\centering
+\raggedright
+\newpage
+\tableofcontents
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+\newpage
+
 # 1 Introduction
+
+Gene expression is measured through RNA sequencing and indicates the “activation status” of all genes in a tissue. This is widely used in medical research to understand disease mechanisms and assess the effectiveness and safety of new treatments. Gene expression varies across tissues, but obtaining samples from heart, lung, brain and other organs is often not all that easy. 
+
+This project aims to develop a machine learning algorithm that can reliably predict gene expression in many different tissues when only the measurements of expression in blood are available. A proof of concept for this approach has been attempted by Basu et al, but is not compatible with unseen data (Basu et al., 2021). This project will start with the analysis of a publicly available dataset (GTEx) containing gene expression of 54 post-mortem tissues from almost 1,000 individuals to develop algorithms that produce a body-wide gene activation estimate from blood alone. 
+
+This project aims to develop an AI algorithm that reliably predicts gene expression in as many different tissues as possible, from blood. In the case of a successful outcome, the algorithm will potentially be published in a peer-reviewed journal and a web tool will be released to enable other researchers and companies to add value to their blood RNAseq data. 
+
+This report will cover the team's initial analysis of the data, which involves many tasks like creating different visualisations to understand how similar tissues are based on shared donors and shared genes, statistically evaluating those similarities. It also covers our approach to choosing the appropriate models for the data. 
+
 # 2 Background Knowledge
 ## 2.1 Introduction to Genetics
 Proteins are large molecules that are complex and play critical and majority roles in the body. Proteins are encoded by genes, that are specific regions of the DNA through a process of two stages (Al Bhketan, 2020). The first stage is transcription which is the process where the DNA within a gene is transcribed into messenger Ribonucleic Acid (mRNA). The second stage is translation which is the process where the mRNA is translated into a protein.
@@ -64,8 +81,8 @@ Additionally, bar plots are produced to understand the proportion of overlapping
 
 
 ```{r echo=FALSE}
-#files <- list.files("~/TMM_norm_filt_counts")
-files <- list.files("~/CSL/TMM_norm_filt_counts")
+files <- list.files("~/TMM_norm_filt_counts")
+#files <- list.files("~/CSL/TMM_norm_filt_counts")
 ```
 
 ```{r echo=FALSE}
@@ -893,50 +910,42 @@ From the previous section's results, we will take the best model from each propo
 
 
 
-
-
-
-
-
 # 5 Timeline
 ## 5.1 Achieved
-**Week of 26 April 2021**: Id matching & batch cleaning
-- Understanding what links information from multiple tissues to the tissue donors
-- Exploring gene expression profiles in all tissues
-- Understanding whether clustering based on information available is occurring and how to solve it
 
-**Week of 3, 10 May 2021 (2 weeks)**: Exploration of tissues similarity and gene expression correlation in GTEx V8 
-- Most tissue similarity and correlation has been performed using previous versions of GTEx so this step helped understand the extent and structure of the dataset
-- Similarity scores, correlation, hierarchical clustering, plotting are performed here.
+1. **Week 1 (26 Apr 2021 - 30 Apr 2021**: Id matching & batch cleaning
++ Understanding what links information from multiple tissues to the tissue donors.
++ Exploring gene expression profiles in all tissues.
++ Understanding whether clustering based on information available is occurring and how to solve it.
 
-**Week of 17 May 2021**: Selection of tissues and sample sizes for training, validation and test sets
-- In GTEx, sample sizes vary according to tissue type and blood is the largest sample size. The appropriate sample size for training, validation and test sets is defined for each tissue. 
+2. **Week 2-3 (3 May 2021 - 14 May 2021)**: Exploration of tissues similarity and gene expression correlation in GTEx V8 
++ Most tissue similarity and correlation has been performed using previous versions of GTEx so this step helped understand the extent and structure of the dataset.
++ Similarity scores, correlation, hierarchical clustering, plotting are performed here.
 
-**Week of 24 May 2021**: Proposal of a number of methods and discussion of such methods
-- Selecting 2 methods and defending the selected methods
+3. **Week 4 (17 May 2021 - 21 May 2021)**: Selection of tissues and sample sizes for training, validation and test sets
++ In GTEx, sample sizes vary according to tissue type and blood is the largest. sample size. The appropriate sample size for training, validation and test sets is defined for each tissue. 
 
-**Week of 31 May 2021 - 19 July 2021**: Pause
+4. **Week 5 (24 May 2021 - 28 May 2021)**: Proposal of a number of methods and discussion of such methods
++ Selecting 2 methods and justifying the selected methods in the context of the project.
 
 ## 5.2 Plan
-**Week of 26 July, 2, 9, 16 August 2021 (4 weeks)**: Deployment of all the proposed methods in different tissues
-- Each member will then deploy their method on a few selected tissues (approx. 10 tissues with the largest sample sizes). We will then tune the models to each of the tissues on the validation sets and produce comparable results
+1. **Week 6-9 (26 Jul 2021 - 20 Aug 2021)**: Deployment of all the proposed methods in different tissues
++ Each member will then deploy their method on a few selected tissues (approx. 10 tissues with the largest sample sizes). We will then tune the models to each of the tissues on the validation sets and produce comparable results.
 
-**Week of 23 August 2021**: Benchmarking of the methods and selection of a final methodology
-- Compare the methods against each other and describe which one should be used for the final deployment
+2. **Week 10 (23 Aug 2021 - 27 Aug 2021)**: Benchmarking of the methods and selection of a final methodology
++ Compare the methods against each other and describe which one should be used for the final deployment.
 
-**Week of 30 August, 6, 13 September 2021 (3 weeks)**: Deployment of the final methodology and fine tuning on validation 
-- The chosen method will be deployed on all tissues and finely tuned to each tissue
+3. **Week 11-13 (30 Aug 2021 - 17 Sep 2021)**: Deployment of the final methodology and fine tuning on validation 
++ The chosen method will be deployed on all tissues and finely tuned to each tissue.
 
-**Week of 20 September 2021**: Mid semester break
+4. **Week 14 (27 Sep 2021 - 1 Oct 2021)**: Assessment of the final methodology and the test set 
++ The final tuned models will be deployed to the test sets and the final conclusion will be drawn.
 
-**Week of 27 September 2021**: Assessment of the final methodology and the test set 
-- The final tuned models will be deployed to the test sets and the final conclusion will be drawn
+5. **Week 15 (4 Oct 2021 - 8 Oct 2021)**: Exploration and description of the results
++ Collection, summary, reportage and presentation of the final results will be performed. The students will present at both CSL and WEHI seminar as a team.
 
-**Week of 4, 11 October 2021 (2 weeks)**: Exploration and description of the results
-- Collection, summary, reportage and presentation of the final results will be performed. The students will present at both CSL and WEHI seminar as a team.
-
-**Week of 18 October 2021**: Development of a user friendly algorithm
-- The student will clean the final algorithm script and make it as user friendly as possible for future deployment.
+6. **Week 16-17 (11 Oct 2021 - 22 Oct 2021)**: Development of a user friendly algorithm
++ The student will clean the final algorithm script and make it as user friendly as possible for future deployment.
 
 
 # Bibliography 
@@ -945,16 +954,19 @@ Albawi, S., Mohammed, T. A., & Al-Zawi, S. (2017). Understanding of a convolutio
 
 Bakar, N. M. A., & Tahir, I. M. (2009). Applying multiple linear regression and neural network to predict bank performance. International Business Research, 2(4), (pp.176-183). https://doi.org/10.5539/ibr.v2n4p176
 
+Basu, M., Wang, K., Ruppin, E., & Hannenhalli, S. (2021). Predicting tissue-specific gene expression from whole blood transcriptome. Science Advances, 7(14), eabd6991. https://doi.org/10.1101/2020.05.10.086942 
+
 Chen, T., He, T., Benesty, M., Khotilovich, V., Tang, Y., & Cho, H. (2015). Xgboost: extreme gradient boosting. R package version 0.4-2, 1(4).
 
 Cutler, A., Cutler, D. R., & Stevens, J. R. (2012). Random forests. In Ensemble machine learning (pp. 157-175). Springer, Boston, MA. https://doi.org/10.1007/978-1-4419-9326-7_5 
 
 Hsueh, H. M., Zhou, D. W., & Tsai, C. A. (2013). Random forests-based differential analysis of gene sets for gene expression data. Gene, 518(1), 179-186. https://doi.org/10.1016/j.gene.2012.11.034 
 
-
 Qi, Y., Oja, M., Weston, J., & Noble, W. S. (2012). A unified multitask architecture for predicting local protein properties. PloS one, 7(3). https://doi.org/10.1371/journal.pone.0032235 
-
 
 Qi, Y. (2012). Random forest for bioinformatics. In Ensemble machine learning (pp. 307-323). Springer, Boston, MA.https://doi.org/10.1007/978-1-4419-9326-7_11 
 
 Singh, R., Lanchantin, J., Robins, G., & Qi, Y. (2016). DeepChrome: deep-learning for predicting gene expression from histone modifications. In Bioinformatics (Vol. 32, pp. i639–i648). https://doi.org/10.1093/bioinformatics/btw427
+
+Al Bkhetan, Z. (2020). Optimisation of phasing: towards improved haplotype-based genetic investigations (Doctoral dissertation, pp. 10-13). http://hdl.handle.net/11343/258861 
+
