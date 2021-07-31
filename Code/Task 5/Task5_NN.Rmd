@@ -1,0 +1,156 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+
+```
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+library(tensorflow)
+```
+
+```{r}
+load("./exp_blood.Rdata")
+load("./exp_other.Rdata")
+```
+
+```{r}
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+colnames(exp_blood_t) <- paste0("Blood_", colnames(exp_blood_t))
+colnames(exp_other_t) <- paste0("Lung_", colnames(exp_other_t))
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = ALL_GENE
+exp_combined = cbind(exp_blood_t[,1:NUM_GENE], exp_other_t[,1:NUM_GENE])
+```
+
+```{r}
+x <- paste(c(colnames(exp_blood_t[,1:NUM_GENE])),collapse="+")
+y <- paste(c(colnames(exp_other_t[,1:NUM_GENE])),collapse="+")
+
+f <- paste(c(y, "~", x),collapse="")
+```
+
+
+
+
+
+```{r}
+# Matrix
+
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+
+data = as.matrix(exp_combined_shuffled)
+
+dimnames(data) = NULL
+```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
+
+```{r}
+# Partition
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+
+training = data[1:n_train, 1:NUM_GENE]
+test = data[(n_train+1):N, 1:NUM_GENE]
+
+trainingtarget = data[1:n_train, (NUM_GENE+1):(NUM_GENE*2)]
+testtarget = data[(n_train+1):N, (NUM_GENE+1):(NUM_GENE*2)]
+
+```
+
+
+
+```{r}
+# Create Model1
+
+model1 = keras_model_sequential()
+model1 %>% layer_dense(units = 5, activation = 'relu', input_shape = c(NUM_GENE)) %>%
+          layer_dense(units = NUM_GENE)
+```
+
+```{r warning=FALSE}
+# Create Model2
+
+model2 = keras_model_sequential()
+model2 %>% layer_dense(units = 1000, activation = 'relu', input_shape = c(NUM_GENE)) %>%
+          layer_dense(units = 100, activation = 'relu', name="bottleneck") %>%
+          layer_dense(units = 1000, activation = 'relu') %>%
+          layer_dense(units = NUM_GENE)
+```
+
+```{r}
+# Choose Model
+model = model2
+
+```
+
+```{r}
+# Compile
+
+model <- model %>% compile(loss = 'mse',
+                  optimizer = 'rmsprop',
+                  metrics = 'mae')
+
+```
+
+```{r}
+# Fit Model
+
+set.seed(123)
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 300,
+      batch_size = 64,
+      validation_split = 0.2)
+```
+
+
+```{r}
+# Evaluate
+
+model %>% evaluate(test, testtarget)
+pred = model %>% predict(test)
+```
+
+
