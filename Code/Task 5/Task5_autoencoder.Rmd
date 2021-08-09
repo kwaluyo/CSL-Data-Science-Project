@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("dplyr")
 #install.packages("magrittr")
 #install.packages("neuralnet")
-
+#install.packages("autokeras")
 ```
 
 ```{r}
@@ -23,6 +23,7 @@ library(dplyr)
 library(magrittr)
 library(neuralnet)
 library(tensorflow)
+library("autokeras")
 ```
 
 ```{r}
@@ -98,46 +99,53 @@ testtarget = data[(n_train+1):N, (NUM_GENE+1):(NUM_GENE*2)]
 
 ```
 
-
-```{r warning=FALSE}
-# Create Model2
-
-model = keras_model_sequential()
-model %>% layer_dense(units = 1000, activation = 'relu', input_shape = c(NUM_GENE)) %>%
-          layer_dense(units = 100, activation = 'relu', name="bottleneck") %>%
-          layer_dense(units = 1000, activation = 'relu') %>%
-          layer_dense(units = NUM_GENE)
-```
-
-
 ```{r}
-# Compile
-
-model <- model %>% compile(loss = 'mse',
-                  optimizer = 'adam',
-                  metrics = 'mae')
-
+#install_autokeras()
 ```
-
 ```{r}
-# Fit Model
-
-set.seed(123)
-mymodel = model %>% 
-  fit(training,
-      trainingtarget,
-      epochs = 20,
-      batch_size = 64,
-      validation_split = 0.2)
+#install_tensorflow()
 ```
+```{r}
+import(autokeras)
+```
+
+
 
 
 
 ```{r}
-# Evaluate
-
-model %>% evaluate(test, testtarget)
-pred = model %>% predict(test)
+library(reticulate)
+py_config()
 ```
+```{r}
+library(reticulate)
+py_install("autokeras")
+```
+
+```{r}
+reg <- model_structured_data_regressor(max_trials = 2) %>% 
+  fit(training, trainingtarget) 
+```
+
+
+```{r}
+# 200 sample, 100 genes
+small_data = training[1:200, 1:100]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
