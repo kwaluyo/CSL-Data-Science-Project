@@ -1,0 +1,189 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+https://www.rdocumentation.org/packages/kerastuneR/versions/0.1.0.3
+
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+#require(devtools)
+#install_version("echarts4r", version = "0.3.3", repos = "http://cran.us.r-project.org")
+#devtools::install_github('henry090/kerastuneR')
+#kerastuneR::install_kerastuner()
+```
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+library(tensorflow)
+library(kerastuneR)
+```
+
+```{r}
+load("./exp_blood.Rdata")
+load("./exp_other.Rdata")
+```
+
+```{r}
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = 20
+exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
+```
+
+
+
+```{r}
+# Matrix
+
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+
+data = as.matrix(exp_combined_shuffled)
+
+dimnames(data) = NULL
+```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
+```{r}
+dim(exp_blood_t)
+dim(data)
+```
+
+```{r}
+# Partition
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+
+training = data[1:n_train, 1:ALL_GENE]
+test = data[(n_train+1):N, 1:ALL_GENE]
+
+trainingtarget = data[1:n_train, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+testtarget = data[(n_train+1):N, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+
+```
+
+
+```{r}
+dim(training)
+dim(test)
+
+dim(trainingtarget)
+dim(testtarget)
+```
+
+
+```{r}
+hp = HyperParameters()
+hp$Choice('learning_rate', c(1e-1, 1e-2, 1e-3))
+hp$Int('num_layers', 5, 7)
+```
+
+
+
+
+```{r}
+my_model = function(hp) {
+  
+  model = keras_model_sequential() 
+  
+  for (i in 1:(hp$get('num_layers')) ) {
+    model %>% layer_dense(32, input_shape = c(ALL_GENE), activation='relu') %>% 
+      layer_dense(units = NUM_GENE, activation='softmax')
+  } %>% 
+    compile(
+      optimizer = tf$keras$optimizers$Adam(hp$get('learning_rate')),
+      loss = 'mse',
+      metrics = 'mse') 
+  return(model)
+  
+}
+```
+
+
+
+```{r}
+tuner = RandomSearch(
+  hypermodel =  my_model,
+  max_trials = 20,
+  hyperparameters = hp,
+  tune_new_entries = T,
+  objective = 'mse')
+```
+
+
+```{r}
+tuner %>% fit_tuner(x = training,
+                    y = trainingtarget,
+                    epochs = 5)
+```
+
+```{r}
+tuner %>% search_summary()
+```
+
+```{r}
+result = kerastuneR::plot_tuner(tuner)
+# the list will show the plot and the data.frame of tuning results
+result 
+```
+
+
+
+```{r}
+results_summary(tuner)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
