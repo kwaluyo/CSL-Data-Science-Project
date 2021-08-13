@@ -108,8 +108,9 @@ dim(testtarget)
 
 ```{r}
 hp = HyperParameters()
-hp$Choice('learning_rate', c(1e-1, 1e-2, 1e-3))
-hp$Int('num_layers', 5, 7)
+hp$Choice('learning_rate', c(1e-1, 1e-3, 1e-5))
+hp$Int('num_layers', 2L, 3L)
+hp$Int('units', 32, 64, step=  32)
 ```
 
 
@@ -119,14 +120,17 @@ hp$Int('num_layers', 5, 7)
 my_model = function(hp) {
   
   model = keras_model_sequential() 
+  model %>% layer_dense(32, input_shape = c(ALL_GENE), activation='relu')
   
   for (i in 1:(hp$get('num_layers')) ) {
-    model %>% layer_dense(32, input_shape = c(ALL_GENE), activation='relu') %>% 
-      layer_dense(units = NUM_GENE, activation='softmax')
-  } %>% 
+    model %>% layer_dense(hp$get('num_layers'), activation='relu') 
+  } 
+  
+  model %>% layer_dense(units = NUM_GENE, activation='relu')   %>%
+    
     compile(
       optimizer = tf$keras$optimizers$Adam(hp$get('learning_rate')),
-      loss = 'mse',
+      loss = 'mae',
       metrics = 'mse') 
   return(model)
   
@@ -141,13 +145,23 @@ tuner = RandomSearch(
   max_trials = 20,
   hyperparameters = hp,
   tune_new_entries = T,
-  objective = 'mse')
+  objective = 'val_mse')
 ```
 
 
 ```{r}
+a = rep(NA, dim(test)[1])
+test_missing = test
+test_missing[,1] = a
+```
+
+
+
+
+```{r}
 tuner %>% fit_tuner(x = training,
-                    y = trainingtarget,
+                    y = trainingtarget, 
+                    validation_data = list(test, testtarget),
                     epochs = 5)
 ```
 
@@ -162,10 +176,11 @@ result
 ```
 
 
-
 ```{r}
-results_summary(tuner)
+best_5_models = tuner %>% get_best_models(5)
+best_5_models[[1]] %>% plot_keras_model()
 ```
+
 
 
 
