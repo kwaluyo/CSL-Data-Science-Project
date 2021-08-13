@@ -1,0 +1,242 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+#require(devtools)
+#install_version("echarts4r", version = "0.3.3", repos = "http://cran.us.r-project.org")
+#devtools::install_github('henry090/kerastuneR')
+#kerastuneR::install_kerastuner()
+```
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+library(tensorflow)
+library(kerastuneR)
+```
+
+```{r}
+load("./exp_blood.Rdata")
+load("./exp_other.Rdata")
+```
+
+```{r}
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+colnames(exp_blood_t) <- paste0("Blood_", colnames(exp_blood_t))
+colnames(exp_other_t) <- paste0("Lung_", colnames(exp_other_t))
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = 20
+exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
+```
+
+```{r}
+x <- paste(c(colnames(exp_blood_t[,1:ALL_GENE])),collapse="+")
+y <- paste(c(colnames(exp_other_t[,1:NUM_GENE])),collapse="+")
+
+f <- paste(c(y, "~", x),collapse="")
+```
+
+
+```{r}
+# Matrix
+
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+
+data = as.matrix(exp_combined_shuffled)
+
+dimnames(data) = NULL
+```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
+```{r}
+dim(exp_blood_t)
+dim(data)
+```
+
+```{r}
+# Partition
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+
+training = data[1:n_train, 1:ALL_GENE]
+test = data[(n_train+1):N, 1:ALL_GENE]
+
+trainingtarget = data[1:n_train, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+testtarget = data[(n_train+1):N, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+
+```
+
+
+```{r}
+dim(training)
+dim(test)
+
+dim(trainingtarget)
+dim(testtarget)
+```
+
+```{r warning=FALSE}
+# Create Model
+
+model = keras_model_sequential()
+model %>% layer_dense(units = 1000, activation = 'elu', input_shape = c(ALL_GENE)) %>%
+          layer_dense(units = 100, activation = 'elu') %>%
+          layer_dense(units = 50, activation = 'elu') %>%
+          layer_dense(units = NUM_GENE)
+```
+
+
+```{r}
+summary(model)
+```
+
+
+
+```{r}
+# Compile
+
+model %>% compile(loss = 'mse',
+                  optimizer = optimizer_rmsprop(lr = 0.002),
+                  metrics = 'mae')
+
+```
+
+```{r}
+# Fit Model
+
+set.seed(1)
+mymodel = model %>% 
+  fit(training,
+      trainingtarget,
+      epochs = 10,
+      step_per_epoch = 3,
+      batch_size = 64,
+      validation_split = 0.2)
+```
+
+
+```{r}
+mymodel$metrics
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+hp = HyperParameters()
+hp$Choice('learning_rate', c(1e-1, 1e-2, 1e-3))
+hp$Int('num_layers', 5L, 10L)
+```
+
+
+```{r}
+build_model = function(hp) {
+  
+  model = keras_model_sequential()
+  model %>% layer_dense(units = hp$Int('units',
+                                     min_value = 32,
+                                     max_value = 512,
+                                     step=  32),input_shape = ncol(x_data),
+                        activation =  'relu') %>%
+    layer_dense(units = 1, activation = 'softmax') %>%
+    compile(
+      optimizer = tf$keras$optimizers$Adam(
+        hp$Choice('learning_rate',
+                  values=c(1e-2, 1e-3, 1e-4))),
+      loss = 'binary_crossentropy',
+      metrics = 'accuracy')
+  return(model)
+}
+```
+
+
+
+```{r}
+my_model = function(hp) {
+  
+  model = keras_model_sequential() 
+  
+  for (i in 1:(hp$get('num_layers')) ) {
+    model %>% layer_dense(32, input_shape = c(ALL_GENE), activation='relu') %>% 
+      layer_dense(units = NUM_GENE, activation='softmax')
+  } %>% 
+    compile(
+      optimizer = tf$keras$optimizers$Adam(hp$get('learning_rate')),
+      loss = 'mse',
+      metrics = 'mse') 
+  return(model)
+  
+}
+```
+
+
+
+```{r}
+tuner = RandomSearch(
+  hypermodel =  my_model,
+  max_trials = 5,
+  hyperparameters = hp,
+  tune_new_entries = T,
+  objective = 'mse',
+  directory = 'dir_1',
+  project_name = 'project1')
+```
+
+
+```{r}
+tuner %>% fit_tuner(x = training,
+                    y = trainingtarget,
+                    epochs = 5)
+```
+
+```{r}
+tuner %>% search_summary()
+```
+

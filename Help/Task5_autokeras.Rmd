@@ -1,0 +1,130 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+#install.packages("autokeras")
+```
+
+
+```{r}
+library(mlbench)
+library(dplyr)
+library(magrittr)
+```
+
+```{r}
+#install.packages("autokeras")
+library(autokeras)
+```
+
+```{r}
+load("./exp_blood.Rdata")
+load("./exp_other.Rdata")
+```
+
+```{r}
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = 1000
+```
+
+
+```{r}
+# Scaling
+data_WB = scale(exp_blood_t)
+data_Lung = scale(exp_other_t)
+```
+
+
+
+```{r}
+# Partition
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+```
+
+
+```{r}
+WB_train = data_WB[1:n_train, 1:NUM_GENE]
+WB_test = data_WB[(n_train+1):N, 1:NUM_GENE]
+
+Lung_train = data_Lung[1:n_train, 1:NUM_GENE]
+Lung_test = data_Lung[(n_train+1):N, 1:NUM_GENE]
+```
+
+
+
+```{r, warning=FALSE}
+
+reg <- model_structured_data_regressor(max_trials = 3) %>% 
+  fit(WB_train, Lung_train) 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+# 200 sample, 100 genes
+#small_data_WB = scale(exp_blood_t[1:200, 1:100])
+#small_data_Lung = scale(exp_other_t[1:200, 1:100])
+```
+
+```{r}
+#write.csv(small_data_WB,'small_data_WB.csv')
+#write.csv(small_data_Lung,'small_data_Lung.csv')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

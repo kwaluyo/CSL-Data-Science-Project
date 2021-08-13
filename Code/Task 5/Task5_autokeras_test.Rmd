@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(mlbench)
+library(dplyr)
+library(magrittr)
+```
+
+```{r}
+install.packages("autokeras")
+library(autokeras)
+```
+```{r}
+blood_data = read.csv("small_data_WB.csv")
+blood_data = blood_data[1:100, 2:51]
+
+lung_data = read.csv("small_data_Lung.csv")
+lung_data = lung_data[1:100, 2:51]
+```
+
+```{r}
+reg <- model_structured_data_regressor(max_trials = 3) %>% 
+  fit(blood_data, lung_data) 
+```
