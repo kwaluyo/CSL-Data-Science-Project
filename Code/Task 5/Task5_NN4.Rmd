@@ -1,0 +1,228 @@
+---
+title: "Untitled"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+https://www.rdocumentation.org/packages/kerastuneR/versions/0.1.0.3
+
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+#require(devtools)
+#install_version("echarts4r", version = "0.3.3", repos = "http://cran.us.r-project.org")
+#devtools::install_github('henry090/kerastuneR')
+#kerastuneR::install_kerastuner()
+```
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+library(tensorflow)
+library(kerastuneR)
+```
+
+
+```{r}
+load("./exp_blood.Rdata")
+load("./exp_other.Rdata")
+```
+
+```{r}
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = ALL_GENE
+exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
+```
+
+
+
+```{r}
+# Matrix
+
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+
+data = as.matrix(exp_combined_shuffled)
+
+dimnames(data) = NULL
+```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
+```{r}
+dim(exp_blood_t)
+dim(data)
+```
+
+```{r}
+# Partition
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+
+training = data[1:n_train, 1:ALL_GENE]
+test = data[(n_train+1):N, 1:ALL_GENE]
+
+trainingtarget = data[1:n_train, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+testtarget = data[(n_train+1):N, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+
+```
+
+
+```{r}
+dim(training)
+dim(test)
+
+dim(trainingtarget)
+dim(testtarget)
+```
+
+```{r}
+N_LAYER = 50
+c = 50
+all_units = c()
+
+counter = 1
+for (i in seq(1, N_LAYER,2)){
+  if (i==1) {
+    units = c(c)
+  }
+  else {
+    units = c()
+    half = ceiling(i/2)
+    for (j in seq(1,half,1)){ 
+      unit = j*c
+      units = c(units,unit)
+    }
+    units_b = sort(units[2:length(units)], decreasing=TRUE)
+    units = c(units_b, units)
+  }
+  
+  all_units[[counter]] = units
+  counter = counter + 1
+}
+#print(all_units)
+```
+
+```{r}
+all_units
+```
+
+
+
+```{r warning=FALSE}
+
+mean_training_loss = c()
+mean_validation_loss = c()
+num_of_layers = c()
+
+# Create Model
+
+for (i in seq(1,length(all_units),1)) {
+  num_layer = length(all_units[[i]])
+  
+  model = keras_model_sequential()
+  
+  if (num_layer==1) {
+    num_unit = all_units[[1]][1]
+    model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
+  }
+  
+  else {
+    num_unit = all_units[[i]][1]
+    model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
+    
+    for (j in seq(2,num_layer,1)) {
+    num_unit = all_units[[i]][j]
+    model %>% layer_dense(units = num_unit, activation='relu')
+    }
+  }
+  
+  model %>% layer_dense(units = NUM_GENE, activation='relu')
+  summary(model)
+  
+  # Compile
+
+  model %>% compile(loss = 'mse',
+                    optimizer = optimizer_rmsprop(lr = 0.001),
+                    metrics = 'mae')
+  
+  # Fit Model
+
+  set.seed(1)
+  mymodel = model %>% 
+    fit(training,
+        trainingtarget,
+        epochs = 10,
+        step_per_epoch = 3,
+        batch_size = 64,
+        validation_split = 0.3)
+  
+  print(mymodel$metrics)
+  mean_training_loss = c(mean_training_loss, mean(mymodel$metrics$loss))
+  mean_validation_loss = c(mean_validation_loss, mean(mymodel$metrics$val_loss))
+  num_of_layers = c(num_of_layers, num_layer)
+}
+
+metrics_df = data.frame(num_of_layers, mean_training_loss, mean_validation_loss)
+metrics_df = metrics_df[order(metrics_df$mean_validation_loss), ]
+write.csv(metrics_df, "Task5_NN4_Result.csv")
+```
+
+
+```{r}
+mymodel$metrics
+```
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
