@@ -50,7 +50,7 @@ N = nrow(exp_other_t)
 
 
 ```{r}
-NUM_GENE = 20
+NUM_GENE = ALL_GENE
 exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
 ```
 
@@ -104,13 +104,27 @@ dim(test)
 dim(trainingtarget)
 dim(testtarget)
 ```
+```{r}
+numLayers = seq(2,20,2)
+units = seq(20,500,20)
+```
+
+
+
+
+
+```{r}
+a = c(1, 2, 3, 4)
+a[2]
+```
+
 
 
 ```{r}
 hp = HyperParameters()
-hp$Choice('learning_rate', c(1e-1, 1e-3, 1e-5))
-hp$Int('num_layers', 2L, 3L)
-hp$Int('units', 32, 64, step=  32)
+hp$Choice('learning_rate', c(1e-3, 1e-5))
+hp$Choice('num_layers', numLayers)
+hp$Choice('units', units)
 ```
 
 
@@ -120,16 +134,17 @@ hp$Int('units', 32, 64, step=  32)
 my_model = function(hp) {
   
   model = keras_model_sequential() 
-  model %>% layer_dense(32, input_shape = c(ALL_GENE), activation='relu')
+  model %>% layer_dense(1000, input_shape = c(ALL_GENE), activation='relu')
   
   for (i in 1:(hp$get('num_layers')) ) {
-    model %>% layer_dense(hp$get('num_layers'), activation='relu') 
+    model %>% layer_dense(hp$get('units'), activation='relu') 
   } 
   
   model %>% layer_dense(units = NUM_GENE, activation='relu')   %>%
     
     compile(
       optimizer = tf$keras$optimizers$Adam(hp$get('learning_rate')),
+      # hp$get('learning_rate')
       loss = 'mae',
       metrics = 'mse') 
   return(model)
@@ -142,7 +157,7 @@ my_model = function(hp) {
 ```{r}
 tuner = RandomSearch(
   hypermodel =  my_model,
-  max_trials = 20,
+  max_trials = 1000,
   hyperparameters = hp,
   tune_new_entries = T,
   objective = 'val_mse')
@@ -162,7 +177,7 @@ test_missing[,1] = a
 tuner %>% fit_tuner(x = training,
                     y = trainingtarget, 
                     validation_data = list(test, testtarget),
-                    epochs = 5)
+                    epochs = 3)
 ```
 
 ```{r}
@@ -174,6 +189,9 @@ result = kerastuneR::plot_tuner(tuner)
 # the list will show the plot and the data.frame of tuning results
 result 
 ```
+```{r}
+write.csv(result[[2]], "Task5_NN3_Result.csv")
+```
 
 
 ```{r}
@@ -184,6 +202,7 @@ best_5_models[[1]] %>% plot_keras_model()
 
 
 
+`
 
 
 
