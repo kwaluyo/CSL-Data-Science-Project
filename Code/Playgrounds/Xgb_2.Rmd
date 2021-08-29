@@ -1,0 +1,128 @@
+---
+title: "Xgb_2"
+output: pdf_document
+---
+
+```{r}
+#install.packages('xgboost') 
+library(xgboost)
+library(caret)
+```
+
+
+```{r}
+load("exp_blood_t.Rdata")
+load("exp_other_t.Rdata")
+#str(exp_blood_t)
+#str(exp_other_t)
+dim(exp_blood_t)
+dim(exp_other_t)
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+```
+
+
+```{r}
+NUM_GENE = ALL_GENE
+exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
+```
+
+```{r}
+# Matrix
+
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+
+data = as.matrix(exp_combined_shuffled)
+
+dimnames(data) = NULL
+```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
+```{r}
+dim(exp_blood_t)
+dim(data)
+```
+
+```{r}
+# Partition
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+
+train_x = data[1:n_train, 1:ALL_GENE]
+test_x = data[(n_train+1):N, 1:ALL_GENE]
+
+train_y = data[1:n_train, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+test_y = data[(n_train+1):N, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+
+```
+
+```{r}
+dim(train_x)
+dim(test_x)
+
+dim(train_y)
+dim(test_y)
+```
+
+
+```{r}
+xgb_train = xgb.DMatrix(data = train_x, label = train_y[,1])
+xgb_test = xgb.DMatrix(data = test_x, label = test_y[,1])
+
+dim(xgb_train)
+dim(xgb_test)
+
+```
+
+```{r}
+xgbc = xgboost(data = xgb_train, max.depth = 2, nrounds = 50)
+#print(xgbc)
+
+```
+
+```{r}
+pred_y = predict(xgbc, xgb_test)
+pred_y
+```
+
+
+```{r}
+mse = mean((test_y - pred_y)^2)
+mae = caret::MAE(test_y, pred_y)
+rmse = caret::RMSE(test_y, pred_y)
+
+cat("MSE: ", mse, "MAE: ", mae, " RMSE: ", rmse)
+```
+
+
+
+```{r}
+
+#for loop starts here. 
+
+models<-list()
+
+for (i in 1:ncol(train_x)){
+  xgb_train = xgb.DMatrix(data = train_x, label = train_y[,1])
+  xgb_test = xgb.DMatrix(data = test_x, label = test_y[,1])
+  
+  models[[i]] <- xgboost(data = xgb_train, max.depth = 2, nrounds =50)
+  pred_y <- predict(models[[i]], xgb_test)
+  
+  #print(cor(pred_y,test_y))
+}
+```
