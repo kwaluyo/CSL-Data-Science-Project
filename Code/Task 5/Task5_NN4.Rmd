@@ -20,6 +20,7 @@ https://www.rdocumentation.org/packages/kerastuneR/versions/0.1.0.3
 #install_version("echarts4r", version = "0.3.3", repos = "http://cran.us.r-project.org")
 #devtools::install_github('henry090/kerastuneR')
 #kerastuneR::install_kerastuner()
+#install.packages("kerasR")
 ```
 
 ```{r}
@@ -30,6 +31,7 @@ library(magrittr)
 library(neuralnet)
 library(tensorflow)
 library(kerastuneR)
+library(kerasR)
 ```
 
 
@@ -105,13 +107,20 @@ dim(trainingtarget)
 dim(testtarget)
 ```
 
+1000 100 1000
+1000 500 100 500 1000
+1000 500 350 100 350 500 1000
+
+
+
 ```{r}
-N_LAYER = 50
-c = 50
+N_LAYER = 10
+
 all_units = c()
 
 counter = 1
 for (i in seq(1, N_LAYER,2)){
+  c = 100
   if (i==1) {
     units = c(c)
   }
@@ -120,6 +129,7 @@ for (i in seq(1, N_LAYER,2)){
     half = ceiling(i/2)
     for (j in seq(1,half,1)){ 
       unit = j*c
+      c = c + 25
       units = c(units,unit)
     }
     units_b = sort(units[2:length(units)], decreasing=TRUE)
@@ -129,24 +139,28 @@ for (i in seq(1, N_LAYER,2)){
   all_units[[counter]] = units
   counter = counter + 1
 }
-#print(all_units)
+print(all_units)
 ```
 
 ```{r}
-all_units
+lr_list = c(0.1, 0.01, 0.001, 0.0001)
 ```
+
 
 
 
 ```{r warning=FALSE}
+model_list = c()
 
 mean_training_loss = c()
 mean_validation_loss = c()
 num_of_layers = c()
+learning_rate = c()
 
 # Create Model
-
-for (i in seq(1,length(all_units),1)) {
+counter = 1
+for (l_rate in lr_list) {
+  for (i in seq(1,length(all_units),1)) {
   num_layer = length(all_units[[i]])
   
   model = keras_model_sequential()
@@ -166,14 +180,14 @@ for (i in seq(1,length(all_units),1)) {
     }
   }
   
-  model %>% layer_dense(units = NUM_GENE, activation='relu')
+  model %>% layer_dense(units = NUM_GENE, activation='relu') # activation : linear
   summary(model)
   
   # Compile
 
-  model %>% compile(loss = 'mse',
-                    optimizer = optimizer_rmsprop(lr = 0.001),
-                    metrics = 'mae')
+  model %>% compile(loss = 'mae',
+                    optimizer = optimizer_rmsprop(lr = l_rate),
+                    metrics = 'mse')
   
   # Fit Model
 
@@ -183,45 +197,66 @@ for (i in seq(1,length(all_units),1)) {
         trainingtarget,
         epochs = 10,
         step_per_epoch = 3,
-        batch_size = 64,
+        batch_size = 16,
         validation_split = 0.3)
   
   print(mymodel$metrics)
   mean_training_loss = c(mean_training_loss, mean(mymodel$metrics$loss))
   mean_validation_loss = c(mean_validation_loss, mean(mymodel$metrics$val_loss))
   num_of_layers = c(num_of_layers, num_layer)
+  learning_rate = c(learning_rate, l_rate)
+  
+  model_list[[counter]] = model
+  counter = counter+1
+  }
 }
 
-metrics_df = data.frame(num_of_layers, mean_training_loss, mean_validation_loss)
+
+
+metrics_df = data.frame(learning_rate, num_of_layers, mean_training_loss, mean_validation_loss)
 metrics_df = metrics_df[order(metrics_df$mean_validation_loss), ]
-write.csv(metrics_df, "Task5_NN4_Result.csv")
+write.csv(metrics_df, "Task5_NN4_Result_all.csv")
+```
+
+
+
+
+
+
+```{r}
+result = read.csv("Task5_NN4_Result_all.csv")
 ```
 
 
 ```{r}
-mymodel$metrics
+plot(result$num_of_layers, result$mean_validation_loss)
 ```
-```{r}
-
-```
-
 
 ```{r}
+final_model = model_list[[16]]
+```
 
+```{r}
+keras_save(final_model, path = "model16.h5")
+```
+
+```{r}
+final_model = keras_load(path = "model16.h5")
+```
+
+
+```{r warning=FALSE}
+# Evaluate
+
+final_model %>% evaluate(test, testtarget)
+pred = final_model %>% predict(test)
 ```
 
 
 
-
-
-
-
-
-
-
-
-
-
+```{r}
+cor(c(pred), c(testtarget))
+```
 
 
 
