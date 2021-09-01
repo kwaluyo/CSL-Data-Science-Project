@@ -126,3 +126,76 @@ for (i in 1:ncol(train_x)){
   #print(cor(pred_y,test_y))
 }
 ```
+
+
+```{r}
+a = matrix(nrow=3, ncol=2)
+b = c(1, 2, 3)
+c = c(4, 5, 6)
+a[,1] = b
+a[,2] = c
+```
+
+
+
+
+
+
+
+
+
+```{r}
+#Kartika's version
+
+NCOL = 3
+# change NCOL with ncol(train_y)
+
+models<-list()
+mae_list = c()
+pred_list = matrix(nrow = n_test, ncol=NCOL)
+
+for (i in 1:NCOL){
+  
+  xgb_train = xgb.DMatrix(data = train_x, label = train_y[,i])
+  xgb_test = xgb.DMatrix(data = test_x, label = test_y[,i])
+  
+  models[[i]] <- xgboost(data = xgb_train, max.depth = 2, nrounds =50, verbose=0)
+  pred_y <- predict(models[[i]], xgb_test)
+  
+  mae = caret::MAE(test_y[,i], pred_y)
+  mae_list = c(mae_list, mae)
+  
+  pred_list[,i] = pred_y
+
+}
+```
+
+```{r}
+pred_list
+```
+
+
+```{r}
+mae_list
+(avg_mae = mean(mae_list))
+```
+
+```{r}
+cor(c(pred_list), c(test_y[,1:NCOL]))
+```
+
+NOTE:
+do cross validation for tuning the hyperparameters
+how? 
+split the training set into k-fold
+iterate through the folds for each hyperparameter values you want to tune
+dont forget to save all models
+take the average of the validation mae's
+pick the best_model with the lowest mae
+do: pred_y <- predict(best_model, xgb_test)
+
+hope this helps!
+
+
+
+
