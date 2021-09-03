@@ -32,6 +32,8 @@ library(neuralnet)
 library(tensorflow)
 library(kerastuneR)
 library(kerasR)
+library(ggplot2)
+library(tidyr)
 ```
 
 
@@ -107,9 +109,6 @@ dim(trainingtarget)
 dim(testtarget)
 ```
 
-1000 100 1000
-1000 500 100 500 1000
-1000 500 350 100 350 500 1000
 
 
 
@@ -143,7 +142,12 @@ print(all_units)
 ```
 
 ```{r}
-lr_list = c(0.1, 0.01, 0.001, 0.0001)
+lr_list = c(0.1, 0.01, 0.001, 0.0001, 0.00001)
+```
+
+
+```{r}
+epochs_list = c(50)
 ```
 
 
@@ -156,11 +160,14 @@ mean_training_loss = c()
 mean_validation_loss = c()
 num_of_layers = c()
 learning_rate = c()
+epochs = c()
 
 # Create Model
 counter = 1
 for (l_rate in lr_list) {
   for (i in seq(1,length(all_units),1)) {
+    #length(all_units)
+    
   num_layer = length(all_units[[i]])
   
   model = keras_model_sequential()
@@ -180,31 +187,34 @@ for (l_rate in lr_list) {
     }
   }
   
-  model %>% layer_dense(units = NUM_GENE, activation='relu') # activation : linear
+  model %>% layer_dense(units = NUM_GENE, activation='linear') #activation : linear
   summary(model)
   
   # Compile
 
-  model %>% compile(loss = 'mae',
+  model %>% compile(loss = 'mse',
                     optimizer = optimizer_rmsprop(lr = l_rate),
-                    metrics = 'mse')
+                    metrics = 'mae')
   
   # Fit Model
 
-  set.seed(1)
-  mymodel = model %>% 
+  for (e in epochs_list) {
+    set.seed(1)
+    mymodel = model %>% 
     fit(training,
         trainingtarget,
-        epochs = 10,
+        epochs = e,
         step_per_epoch = 3,
         batch_size = 16,
         validation_split = 0.3)
+    epochs = c(epochs, e)
+    print(mymodel$metrics)
+    mean_training_loss = c(mean_training_loss, mean(mymodel$metrics$loss))
+    mean_validation_loss = c(mean_validation_loss, mean(mymodel$metrics$val_loss))
+    num_of_layers = c(num_of_layers, num_layer)
+    learning_rate = c(learning_rate, l_rate)
+  }
   
-  print(mymodel$metrics)
-  mean_training_loss = c(mean_training_loss, mean(mymodel$metrics$loss))
-  mean_validation_loss = c(mean_validation_loss, mean(mymodel$metrics$val_loss))
-  num_of_layers = c(num_of_layers, num_layer)
-  learning_rate = c(learning_rate, l_rate)
   
   model_list[[counter]] = model
   counter = counter+1
@@ -213,36 +223,66 @@ for (l_rate in lr_list) {
 
 
 
-metrics_df = data.frame(learning_rate, num_of_layers, mean_training_loss, mean_validation_loss)
+metrics_df = data.frame(epochs, learning_rate, num_of_layers, mean_training_loss, mean_validation_loss)
 metrics_df = metrics_df[order(metrics_df$mean_validation_loss), ]
-write.csv(metrics_df, "Task5_NN4_Result_all.csv")
+write.csv(metrics_df, "Task5_NN4_Result_epoch50.csv")
 ```
 
 
+```{r}
+result1 = read.csv("Task5_NN4_Result_epoch10.csv")%>% drop_na()
+result2 = read.csv("Task5_NN4_Result_epoch30.csv")%>% drop_na()
+result3 = read.csv("Task5_NN4_Result_epoch50.csv")%>% drop_na()
+df = rbind(result1, result2, result3)
+#df = df[df$mean_validation_loss<1,]
+df = df[order(df$mean_validation_loss), ]
+df = df[,c(2:6)]
+write.csv(df, "Task5_NN4_Result_all_combined.csv", row.names = FALSE)
+```
 
 
 
 
 ```{r}
-result = read.csv("Task5_NN4_Result_all.csv")
+result = read.csv("Task5_NN4_Result_all_combined.csv")
 ```
 
 
-```{r}
-plot(result$num_of_layers, result$mean_validation_loss)
-```
 
 ```{r}
-final_model = model_list[[16]]
+ggplot(result, aes(x = num_of_layers, y = mean_validation_loss)) +
+    geom_point(aes(color = factor(learning_rate), shape = factor(epochs)))
+```
+```{r}
+
+num_unit = 100
+model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
+model %>% layer_dense(units = NUM_GENE, activation='linear') 
+summary(model)
+
+# Compile
+
+model %>% compile(loss = 'mse',
+                  optimizer = optimizer_rmsprop(lr = 0.0001),
+                  metrics = 'mae')
+
+# Fit Model
+
+set.seed(1)
+mymodel = model %>% 
+fit(training,
+    trainingtarget,
+    epochs = 30,
+    step_per_epoch = 3,
+    batch_size = 16,
+    validation_split = 0.3)
+print(mymodel$metrics)
+   
+```
+```{r}
+final_model = model
 ```
 
-```{r}
-keras_save(final_model, path = "model16.h5")
-```
-
-```{r}
-final_model = keras_load(path = "model16.h5")
-```
 
 
 ```{r warning=FALSE}
@@ -251,12 +291,35 @@ final_model = keras_load(path = "model16.h5")
 final_model %>% evaluate(test, testtarget)
 pred = final_model %>% predict(test)
 ```
-
-
-
 ```{r}
 cor(c(pred), c(testtarget))
 ```
+
+```{r}
+total_cor = c()
+for (i in seq(1,ncol(pred),1)) {
+  total_cor = c(total_cor, cor(pred[,i], testtarget[,i]))
+}
+```
+
+```{r}
+(avg_cor = mean(total_cor))
+```
+
+```{r}
+plot(c(pred), c(testtarget))
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
