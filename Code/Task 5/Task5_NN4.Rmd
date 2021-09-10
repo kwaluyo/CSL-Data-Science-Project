@@ -23,6 +23,7 @@ https://www.rdocumentation.org/packages/kerastuneR/versions/0.1.0.3
 #install.packages("kerasR")
 ```
 
+
 ```{r}
 library(keras)
 library(mlbench)
@@ -38,66 +39,10 @@ library(tidyr)
 
 
 ```{r}
-load("./exp_blood.Rdata")
-load("./exp_other.Rdata")
-```
-
-```{r}
-exp_blood_t = t(exp_blood)
-exp_other_t = t(exp_other)
-```
-
-```{r}
-ALL_GENE = ncol(exp_other_t)
-N = nrow(exp_other_t)
-```
-
-
-```{r}
-NUM_GENE = ALL_GENE
-exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
-```
-
-
-
-```{r}
-# Matrix
-
-set.seed(321)
-
-rows <- sample(nrow(exp_combined))
-exp_combined_shuffled <- exp_combined[rows, ]
-
-
-data = as.matrix(exp_combined_shuffled)
-
-dimnames(data) = NULL
-```
-
-```{r}
-# Scaling
-data = scale(data)
-```
-
-```{r}
-dim(exp_blood_t)
-dim(data)
-```
-
-```{r}
-# Partition
-train_proportion = 0.8
-test_proportion = 1-train_proportion
-
-n_train = round(N*train_proportion)
-n_test = N - n_train
-
-training = data[1:n_train, 1:ALL_GENE]
-test = data[(n_train+1):N, 1:ALL_GENE]
-
-trainingtarget = data[1:n_train, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
-testtarget = data[(n_train+1):N, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
-
+training = read.csv("X_train.csv")
+test = read.csv("X_test.csv")
+trainingtarget = read.csv("Y_train.csv")
+testtarget = read.csv("Y_test.csv")
 ```
 
 
@@ -142,12 +87,12 @@ print(all_units)
 ```
 
 ```{r}
-lr_list = c(0.1, 0.01, 0.001, 0.0001, 0.00001)
+lr_list = c(0.01, 0.001, 0.0001, 0.00001)
 ```
 
 
 ```{r}
-epochs_list = c(50)
+epochs_list = c(500)
 ```
 
 
@@ -156,14 +101,15 @@ epochs_list = c(50)
 ```{r warning=FALSE}
 model_list = c()
 
-mean_training_loss = c()
-mean_validation_loss = c()
+training_loss = c()
+validation_loss = c()
 num_of_layers = c()
 learning_rate = c()
 epochs = c()
 
 # Create Model
 counter = 1
+
 for (l_rate in lr_list) {
   for (i in seq(1,length(all_units),1)) {
     #length(all_units)
@@ -188,7 +134,7 @@ for (l_rate in lr_list) {
   }
   
   model %>% layer_dense(units = NUM_GENE, activation='linear') #activation : linear
-  summary(model)
+  #summary(model)
   
   # Compile
 
@@ -196,66 +142,73 @@ for (l_rate in lr_list) {
                     optimizer = optimizer_rmsprop(lr = l_rate),
                     metrics = 'mae')
   
-  # Fit Model
-
-  for (e in epochs_list) {
-    set.seed(1)
-    mymodel = model %>% 
-    fit(training,
-        trainingtarget,
-        epochs = e,
-        step_per_epoch = 3,
-        batch_size = 16,
-        validation_split = 0.3)
-    epochs = c(epochs, e)
-    print(mymodel$metrics)
-    mean_training_loss = c(mean_training_loss, mean(mymodel$metrics$loss))
-    mean_validation_loss = c(mean_validation_loss, mean(mymodel$metrics$val_loss))
-    num_of_layers = c(num_of_layers, num_layer)
-    learning_rate = c(learning_rate, l_rate)
-  }
+    # Fit Model
   
-  
-  model_list[[counter]] = model
-  counter = counter+1
+    for (e in epochs_list) {
+      set.seed(1)
+      mymodel = model %>% 
+      fit(training,
+          trainingtarget,
+          epochs = e,
+          step_per_epoch = 3,
+          batch_size = 16,
+          validation_split = 0.2,
+          verbose = 0)
+      epochs = c(epochs, e)
+      #print(mymodel$metrics)
+      training_loss = c(training_loss, mymodel$metrics$loss[e])
+      validation_loss = c(validation_loss, mymodel$metrics$val_loss[e])
+      num_of_layers = c(num_of_layers, num_layer)
+      learning_rate = c(learning_rate, l_rate)
+      print(counter)
+      print(mymodel$metrics$val_loss[e])
+      model_list[[counter]] = model
+      counter = counter+1
+    }
   }
 }
 
 
 
-metrics_df = data.frame(epochs, learning_rate, num_of_layers, mean_training_loss, mean_validation_loss)
-metrics_df = metrics_df[order(metrics_df$mean_validation_loss), ]
-write.csv(metrics_df, "Task5_NN4_Result_epoch50.csv")
+metrics_df = data.frame(epochs, learning_rate, num_of_layers, training_loss, validation_loss)
+metrics_df = metrics_df[order(metrics_df$validation_loss), ]
+write.csv(metrics_df, "Task5_NN4_Result_new500.csv", row.names = FALSE)
 ```
 
 
 ```{r}
-result1 = read.csv("Task5_NN4_Result_epoch10.csv")%>% drop_na()
-result2 = read.csv("Task5_NN4_Result_epoch30.csv")%>% drop_na()
-result3 = read.csv("Task5_NN4_Result_epoch50.csv")%>% drop_na()
-df = rbind(result1, result2, result3)
+result1 = read.csv("Task5_NN4_Result_new10.csv")%>% drop_na()
+result2 = read.csv("Task5_NN4_Result_new30.csv")%>% drop_na()
+result3 = read.csv("Task5_NN4_Result_new50.csv")%>% drop_na()
+result4 = read.csv("Task5_NN4_Result_new100.csv")%>% drop_na()
+result5 = read.csv("Task5_NN4_Result_new200.csv")%>% drop_na()
+result6 = read.csv("Task5_NN4_Result_new500.csv")%>% drop_na()
+df = rbind(result1, result2, result3, result4, result5, result6)
 #df = df[df$mean_validation_loss<1,]
-df = df[order(df$mean_validation_loss), ]
-df = df[,c(2:6)]
-write.csv(df, "Task5_NN4_Result_all_combined.csv", row.names = FALSE)
+df = df[order(df$validation_loss), ]
+write.csv(df, "Task5_NN4_Result_new_combined.csv", row.names = FALSE)
 ```
 
 
 
 
 ```{r}
-result = read.csv("Task5_NN4_Result_all_combined.csv")
+result = read.csv("Task5_NN4_Result_new_combined.csv")
+result = result[result$validation_loss<1,]
 ```
 
 
 
 ```{r}
-ggplot(result, aes(x = num_of_layers, y = mean_validation_loss)) +
-    geom_point(aes(color = factor(learning_rate), shape = factor(epochs)))
+ggplot(result, aes(x = num_of_layers, y = validation_loss)) +
+    geom_point(aes(color = factor(learning_rate))) +
+  facet_wrap(~epochs, nrow=1)
 ```
 ```{r}
 
 num_unit = 100
+
+model = keras_model_sequential()
 model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
 model %>% layer_dense(units = NUM_GENE, activation='linear') 
 summary(model)
@@ -263,7 +216,7 @@ summary(model)
 # Compile
 
 model %>% compile(loss = 'mse',
-                  optimizer = optimizer_rmsprop(lr = 0.0001),
+                  optimizer = optimizer_rmsprop(lr = 0.00001),
                   metrics = 'mae')
 
 # Fit Model
@@ -272,10 +225,10 @@ set.seed(1)
 mymodel = model %>% 
 fit(training,
     trainingtarget,
-    epochs = 30,
+    epochs = 200,
     step_per_epoch = 3,
     batch_size = 16,
-    validation_split = 0.3)
+    validation_split = 0.2)
 print(mymodel$metrics)
    
 ```
@@ -296,14 +249,14 @@ cor(c(pred), c(testtarget))
 ```
 
 ```{r}
-total_cor = c()
+all_cor = c()
 for (i in seq(1,ncol(pred),1)) {
-  total_cor = c(total_cor, cor(pred[,i], testtarget[,i]))
+  all_cor = c(all_cor, cor(pred[,i], testtarget[,i]))
 }
 ```
 
 ```{r}
-(avg_cor = mean(total_cor))
+(avg_cor = mean(all_cor))
 ```
 
 ```{r}
