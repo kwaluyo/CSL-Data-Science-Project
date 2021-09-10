@@ -40,11 +40,12 @@ library(tidyr)
 
 
 
+
 ```{r}
-training = read.csv("X_train.csv")
-test = read.csv("X_test.csv")
-trainingtarget = read.csv("Y_train.csv")
-testtarget = read.csv("Y_test.csv")
+training = as.matrix(read.csv("X_train.csv"))
+test = as.matrix(read.csv("X_test.csv"))
+trainingtarget = as.matrix(read.csv("Y_train.csv"))
+testtarget = as.matrix(read.csv("Y_test.csv"))
 ```
 
 
@@ -62,15 +63,15 @@ NUM_GENE = ALL_GENE
 
 
 
-
 ```{r}
 N_LAYER = 10
+BOTTLENECK = 300
 
 all_units = c()
 
 counter = 1
 for (i in seq(1, N_LAYER,2)){
-  c = 10
+  c = BOTTLENECK
   if (i==1) {
     units = c(c)
   }
@@ -99,7 +100,7 @@ lr_list = c(0.00001)
 
 
 ```{r}
-epochs_list = c(1,2,3)
+epochs_list = c(50, 100, 200)
 ```
 
 
@@ -159,7 +160,8 @@ for (l_rate in lr_list) {
           epochs = e,
           step_per_epoch = 3,
           batch_size = 16,
-          validation_split = 0.2
+          validation_split = 0.2,
+          verbose=0
           )
       epochs = c(epochs, e)
       #print(mymodel$metrics)
@@ -179,20 +181,20 @@ for (l_rate in lr_list) {
 
 metrics_df = data.frame(epochs, learning_rate, num_of_layers, training_loss, validation_loss)
 metrics_df = metrics_df[order(metrics_df$validation_loss), ]
-layer_combination = c(rep(2, counter))
-metrics_df = cbind(metrics_df, layer_combination)
-write.csv(metrics_df, "Task5_NN4_Result_combined2.csv", row.names = FALSE)
+bottleneck = c(rep(BOTTLENECK, counter-1))
+metrics_df = cbind(metrics_df, bottleneck)
+write.csv(metrics_df, "Task5_NN4_Result_combined4.csv", row.names = FALSE)
 ```
 
 
 ```{r}
-result1 = read.csv("Task5_NN4_Result_new10.csv")%>% drop_na()
-result2 = read.csv("Task5_NN4_Result_new30.csv")%>% drop_na()
-result3 = read.csv("Task5_NN4_Result_new50.csv")%>% drop_na()
-result4 = read.csv("Task5_NN4_Result_new100.csv")%>% drop_na()
-result5 = read.csv("Task5_NN4_Result_new200.csv")%>% drop_na()
-result6 = read.csv("Task5_NN4_Result_new500.csv")%>% drop_na()
-df = rbind(result1, result2, result3, result4, result5, result6)
+result1 = read.csv("Task5_NN4_Result_combined1.csv")%>% drop_na()
+result2 = read.csv("Task5_NN4_Result_combined2.csv")%>% drop_na()
+result3 = read.csv("Task5_NN4_Result_combined3.csv")%>% drop_na()
+result4 = read.csv("Task5_NN4_Result_combined4.csv")%>% drop_na()
+#result5 = read.csv("Task5_NN4_Result_new200.csv")%>% drop_na()
+#result6 = read.csv("Task5_NN4_Result_new500.csv")%>% drop_na()
+df = rbind(result1, result2, result3, result4)
 #df = df[df$mean_validation_loss<1,]
 df = df[order(df$validation_loss), ]
 write.csv(df, "Task5_NN4_Result_new_combined.csv", row.names = FALSE)
@@ -213,6 +215,7 @@ ggplot(result, aes(x = num_of_layers, y = validation_loss)) +
     geom_point(aes(color = factor(learning_rate))) +
   facet_wrap(~epochs, nrow=1)
 ```
+
 ```{r}
 
 num_unit = 100
