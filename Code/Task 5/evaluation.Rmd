@@ -1,0 +1,61 @@
+---
+title: "Untitled"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r}
+testtarget = as.matrix(read.csv("Y_test.csv"))
+```
+
+```{r}
+NN_pred = as.matrix(read.csv("Task5_NN4_Prediction.csv"))
+```
+
+```{r}
+# Read XGB prediction file
+# XGB_pred = as.matrix(read.csv("filename"))
+```
+
+
+```{r}
+# correlation between NN prediction and Ground Truth
+
+all_cor = c()
+for (i in seq(1,ncol(pred),1)) {
+  all_cor = c(all_cor, cor(NN_pred[,i], testtarget[,i]))
+}
+(NN_GT_cor = mean(all_cor))
+```
+
+```{r}
+# correlation between XGB prediction and Ground Truth
+
+all_cor = c()
+for (i in seq(1,ncol(pred),1)) {
+  all_cor = c(all_cor, cor(XGB_pred[,i], testtarget[,i]))
+}
+(XGB_GT_cor = mean(all_cor))
+```
+
+
+```{r}
+# correlation between XGB prediction and NN prediction
+
+all_cor = c()
+for (i in seq(1,ncol(pred),1)) {
+  all_cor = c(all_cor, cor(XGB_pred[,i], NN_pred[,i]))
+}
+(XGB_NN_cor = mean(all_cor))
+```
+
