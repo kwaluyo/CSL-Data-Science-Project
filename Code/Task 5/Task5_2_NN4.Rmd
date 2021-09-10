@@ -1,0 +1,288 @@
+---
+title: "Untitled"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+https://www.rdocumentation.org/packages/kerastuneR/versions/0.1.0.3
+
+
+```{r}
+#install.packages("keras")
+#install.packages("mlbench")
+#install.packages("dplyr")
+#install.packages("magrittr")
+#install.packages("neuralnet")
+#require(devtools)
+#install_version("echarts4r", version = "0.3.3", repos = "http://cran.us.r-project.org")
+#devtools::install_github('henry090/kerastuneR')
+#kerastuneR::install_kerastuner()
+#install.packages("kerasR")
+```
+
+
+```{r}
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
+library(tensorflow)
+library(kerastuneR)
+library(kerasR)
+library(ggplot2)
+library(tidyr)
+```
+
+
+
+
+```{r}
+training = read.csv("X_train.csv")
+test = read.csv("X_test.csv")
+trainingtarget = read.csv("Y_train.csv")
+testtarget = read.csv("Y_test.csv")
+```
+
+
+```{r}
+dim(training)
+dim(test)
+
+dim(trainingtarget)
+dim(testtarget)
+```
+```{r}
+ALL_GENE = dim(trainingtarget)[2]
+NUM_GENE = ALL_GENE
+```
+
+
+
+
+```{r}
+N_LAYER = 10
+
+all_units = c()
+
+counter = 1
+for (i in seq(1, N_LAYER,2)){
+  c = 10
+  if (i==1) {
+    units = c(c)
+  }
+  else {
+    units = c()
+    half = ceiling(i/2)
+    for (j in seq(1,half,1)){ 
+      unit = j*c
+      c = c + 25
+      units = c(units,unit)
+    }
+    units_b = sort(units[2:length(units)], decreasing=TRUE)
+    units = c(units_b, units)
+  }
+  
+  all_units[[counter]] = units
+  counter = counter + 1
+}
+print(all_units)
+```
+
+
+```{r}
+lr_list = c(0.00001)
+```
+
+
+```{r}
+epochs_list = c(1,2,3)
+```
+
+
+
+
+```{r warning=FALSE}
+model_list = c()
+
+training_loss = c()
+validation_loss = c()
+num_of_layers = c()
+learning_rate = c()
+epochs = c()
+
+# Create Model
+counter = 1
+
+for (l_rate in lr_list) {
+  for (i in seq(1,length(all_units),1)) {
+    #length(all_units)
+    
+  num_layer = length(all_units[[i]])
+  
+  model = keras_model_sequential()
+  
+  if (num_layer==1) {
+    num_unit = all_units[[1]][1]
+    model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
+  }
+  
+  else {
+    num_unit = all_units[[i]][1]
+    model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
+    
+    for (j in seq(2,num_layer,1)) {
+    num_unit = all_units[[i]][j]
+    model %>% layer_dense(units = num_unit, activation='relu')
+    }
+  }
+  
+  model %>% layer_dense(units = NUM_GENE, activation='linear') #activation : linear
+  #summary(model)
+  
+  # Compile
+
+  model %>% compile(loss = 'mse',
+                    optimizer = optimizer_rmsprop(lr = l_rate),
+                    metrics = 'mae')
+  
+    # Fit Model
+  
+    for (e in epochs_list) {
+      set.seed(1)
+      mymodel = model %>% 
+      fit(training,
+          trainingtarget,
+          epochs = e,
+          step_per_epoch = 3,
+          batch_size = 16,
+          validation_split = 0.2
+          )
+      epochs = c(epochs, e)
+      #print(mymodel$metrics)
+      training_loss = c(training_loss, mymodel$metrics$loss[e])
+      validation_loss = c(validation_loss, mymodel$metrics$val_loss[e])
+      num_of_layers = c(num_of_layers, num_layer)
+      learning_rate = c(learning_rate, l_rate)
+      print(counter)
+      print(mymodel$metrics$val_loss[e])
+      model_list[[counter]] = model
+      counter = counter+1
+    }
+  }
+}
+
+
+
+metrics_df = data.frame(epochs, learning_rate, num_of_layers, training_loss, validation_loss)
+metrics_df = metrics_df[order(metrics_df$validation_loss), ]
+layer_combination = c(rep(2, counter))
+metrics_df = cbind(metrics_df, layer_combination)
+write.csv(metrics_df, "Task5_NN4_Result_combined2.csv", row.names = FALSE)
+```
+
+
+```{r}
+result1 = read.csv("Task5_NN4_Result_new10.csv")%>% drop_na()
+result2 = read.csv("Task5_NN4_Result_new30.csv")%>% drop_na()
+result3 = read.csv("Task5_NN4_Result_new50.csv")%>% drop_na()
+result4 = read.csv("Task5_NN4_Result_new100.csv")%>% drop_na()
+result5 = read.csv("Task5_NN4_Result_new200.csv")%>% drop_na()
+result6 = read.csv("Task5_NN4_Result_new500.csv")%>% drop_na()
+df = rbind(result1, result2, result3, result4, result5, result6)
+#df = df[df$mean_validation_loss<1,]
+df = df[order(df$validation_loss), ]
+write.csv(df, "Task5_NN4_Result_new_combined.csv", row.names = FALSE)
+```
+
+
+
+
+```{r}
+result = read.csv("Task5_NN4_Result_new_combined.csv")
+result = result[result$validation_loss<1,]
+```
+
+
+
+```{r}
+ggplot(result, aes(x = num_of_layers, y = validation_loss)) +
+    geom_point(aes(color = factor(learning_rate))) +
+  facet_wrap(~epochs, nrow=1)
+```
+```{r}
+
+num_unit = 100
+
+model = keras_model_sequential()
+model %>% layer_dense(units = num_unit, input_shape = c(ALL_GENE), activation='relu')
+model %>% layer_dense(units = NUM_GENE, activation='linear') 
+summary(model)
+
+# Compile
+
+model %>% compile(loss = 'mse',
+                  optimizer = optimizer_rmsprop(lr = 0.00001),
+                  metrics = 'mae')
+
+# Fit Model
+
+set.seed(1)
+mymodel = model %>% 
+fit(training,
+    trainingtarget,
+    epochs = 200,
+    step_per_epoch = 3,
+    batch_size = 16,
+    validation_split = 0.2)
+print(mymodel$metrics)
+   
+```
+```{r}
+final_model = model
+```
+
+
+
+```{r warning=FALSE}
+# Evaluate
+
+final_model %>% evaluate(test, testtarget)
+pred = final_model %>% predict(test)
+```
+```{r}
+cor(c(pred), c(testtarget))
+```
+
+```{r}
+all_cor = c()
+for (i in seq(1,ncol(pred),1)) {
+  all_cor = c(all_cor, cor(pred[,i], testtarget[,i]))
+}
+```
+
+```{r}
+(avg_cor = mean(all_cor))
+```
+
+```{r}
+plot(c(pred), c(testtarget))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
