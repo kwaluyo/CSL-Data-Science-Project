@@ -1,0 +1,121 @@
+---
+title: "XGB_grid searching"
+output: pdf_document
+---
+
+```{r}
+
+#install.packages('xgboost') 
+
+library(xgboost)
+library(caret)
+```
+
+
+```{r}
+
+load("exp_blood_t.Rdata")
+load("exp_other_t.Rdata")
+
+training = read.csv("X_train.csv")
+
+
+test = read.csv("X_test.csv")
+
+
+trainingtarget = read.csv("Y_train.csv")
+
+
+
+testtarget = read.csv("Y_test.csv")
+
+
+dim(training)
+dim(test)
+dim(trainingtarget)
+dim(testtarget)
+```
+
+```{r}
+
+ALL_GENE = dim(trainingtarget)[2]
+NUM_GENE = ALL_GENE
+```
+
+```{r}
+a = matrix(nrow=3, ncol=2)
+b = c(1, 2, 3)
+c = c(4, 5, 6)
+a[,1] = b
+a[,2] = c
+
+```
+
+
+```{r}
+
+NCOL = 1 
+#currently 1, just for 1 gene 
+
+#change NCOL with ncol(trainingtarget)
+
+models<-list()
+mae_list = c()
+pred_list = matrix(nrow = nrow(test), ncol=NCOL)
+
+#setting up the cross-validation hyper-parameter search 
+
+xgb_grid_1 = expand.grid(
+  nrounds = c(100, 500, 1000),
+  eta = c(0.001, 0.01, 0.1),
+  max_depth = c(2, 4, 6, 8, 10),
+  gamma = c(0, 1, 2, 5)
+)
+
+#training control parameters
+
+xgb_trcontrol_1 = trainControl(
+  method = "cv",
+  number = 5,
+  verboseIter = TRUE,
+  returnData = FALSE,
+  returnResamp = "all",
+  #classProbs = FALSE,
+  #summaryFunction = twoClassSummary,
+  allowParallel = TRUE
+)
+
+for (i in 1:NCOL){
+  
+  xgb_train = xgb.DMatrix(data = as.matrix(training), label = as.factor(trainingtarget[,i]))
+  xgb_test = xgb.DMatrix(data = as.matrix(test), label = as.factor(testtarget[,i]))
+  
+  models[[i]] <- train(xgb_train, xgb_test,
+                       trControl = xgb_trcontrol_1,
+                       tuneGrid = xgb_grid_1,
+                       method = "xgbTree")
+  
+  #pred_y <- predict(models[[i]], xgb_test)
+  
+  #mae = caret::MAE(testtarget[,i], pred_y)
+  #mae_list = c(mae_list, mae)
+  
+  #pred_list[,i] = pred_y
+
+}
+```
+
+```{r}
+pred_list
+```
+
+```{r}
+mae_list
+(avg_mae = mean(mae_list))
+```
+
+```{r}
+cor(c(pred_list), c(testtarget[,1:NCOL]))
+```
+
+
