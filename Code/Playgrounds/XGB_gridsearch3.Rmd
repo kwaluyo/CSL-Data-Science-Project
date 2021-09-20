@@ -1,0 +1,338 @@
+---
+title: "XGB_grid searching"
+output: pdf_document
+---
+
+```{r}
+
+```
+
+```{r}
+
+#install.packages('xgboost') 
+#install.packages("foreach")
+
+library(xgboost)
+library(caret)
+library(foreach)
+```
+
+
+```{r}
+training = read.csv("X_train.csv")
+
+
+test = read.csv("X_test.csv")
+
+
+trainingtarget = read.csv("Y_train.csv")
+
+
+
+testtarget = read.csv("Y_test.csv")
+
+
+dim(training)
+dim(test)
+dim(trainingtarget)
+dim(testtarget)
+```
+
+```{r}
+
+ALL_GENE = dim(trainingtarget)[2]
+NUM_GENE = ALL_GENE
+```
+
+
+```{r}
+# Set the grid for hyperparameter tuning
+
+set.seed(321)
+xgb_grid_1 = expand.grid(
+  nrounds = c(50, 100),
+  eta = c(0.01, 0.1),
+  max_depth = c(2, 4, 8),
+  gamma = c(0, 1, 5),
+  min_child_weight = 1, 
+  colsample_bytree = 1,
+  subsample = 1
+)
+
+
+xgb_trcontrol_1 = trainControl(
+  method = "cv",
+  number = 2,
+  verboseIter = TRUE,
+  returnData = FALSE,
+  returnResamp = "all",
+  #classProbs = FALSE,
+  #summaryFunction = twoClassSummary,
+  allowParallel = TRUE
+)
+```
+
+
+```{r}
+# Select 50 random genes
+NCOL = 50
+
+set.seed(321)
+sample_index = sample((ALL_GENE), size=NCOL, replace =F)
+sample_trainingtarget = trainingtarget[,sample_index]
+sample_testtarget = testtarget[,sample_index]
+
+
+```
+
+```{r}
+start_time = Sys.time()
+
+cl <- parallel::makeCluster(NCOL)
+doParallel::registerDoParallel(cl)
+
+model=foreach(i = c(1:NCOL)) %dopar% {
+  caret::train(training, sample_trainingtarget[,i],
+                       trControl = xgb_trcontrol_1,
+                       tuneGrid = xgb_grid_1,
+                       method = "xgbTree")
+}
+
+parallel::stopCluster(cl)
+
+end_time = Sys.time()
+(time = end_time - start_time)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pred_list = matrix(nrow = nrow(test), ncol=NCOL)
+
+for (i in c(1:NCOL)) {
+  xgb_test = xgb.DMatrix(data = as.matrix(test), label = as.numeric(sample_testtarget[,i]))
+  
+  predicted <- predict(model[[i]]$finalModel, xgb_test)
+  pred_list[,i] = predicted
+}
+
+write.csv(pred_list, "XGB_Result_50_random.csv", row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+best_eta_list = c()
+best_gamma_list = c()
+best_maxdepth_list = c()
+best_nrounds_list = c()
+gene = c(1:NCOL)
+
+for (i in gene) {
+  best_model = model[[i]]$finalModel
+  
+  best_eta = best_model$tuneValue$eta
+  best_gamma = best_model$tuneValue$gamma
+  best_maxdepth = best_model$tuneValue$max_depth
+  best_nrounds = best_model$tuneValue$nrounds
+  
+  best_eta_list = c(best_eta_list, best_eta)
+  best_gamma_list = c(best_gamma_list, best_gamma)
+  best_maxdepth_list = c(best_maxdepth_list, best_maxdepth)
+  best_nrounds_list = c(best_nrounds_list, best_nrounds)
+
+}
+
+best_params = data.frame(gene, best_eta_list, best_gamma_list, best_maxdepth_list, best_nrounds_list)
+write.csv(best_params, "XGB_Result_Params_50_random.csv", row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+gene = c(1:NCOL)
+param_combination = dim(xgb_grid_1)[1]
+
+loss_mat = matrix(nrow = length(gene), ncol=param_combination)
+
+
+for (i in gene) {
+  for (j in c(1:param_combination)) {
+    rmse = model[[i]]$results$RMSE[j]
+    loss_mat[i,j] = rmse
+  }
+}
+
+write.csv(loss_mat, "XGB_Result_loss_50_random.csv", row.names = FALSE)
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+loss_mat = read.csv("XGB_Result_loss_50_random.csv")
+
+avg_loss_list = c()
+
+for (i in c(1:ncol(loss_mat))) {
+  avg_rmse = mean(loss_mat[,i])
+  avg_loss_list = c(avg_loss_list, avg_rmse)
+}
+
+which.min(avg_loss_list)
+xgb_grid_1$loss = avg_loss_list
+```
+
+
+
+
+```{r}
+xgb_grid_1 = expand.grid(
+  nrounds = 100,
+  eta = 0.1,
+  max_depth = 2,
+  gamma = 1,
+  min_child_weight = 1, 
+  colsample_bytree = 1,
+  subsample = 1
+)
+
+#training control parameters
+
+xgb_trcontrol_1 = trainControl(
+  method = "cv",
+  number = 2,
+  verboseIter = TRUE,
+  returnData = FALSE,
+  returnResamp = "all",
+  #classProbs = FALSE,
+  #summaryFunction = twoClassSummary,
+  allowParallel = TRUE
+)
+```
+
+```{r}
+start_time = Sys.time()
+
+cl <- parallel::makeCluster(NCOL)
+doParallel::registerDoParallel(cl)
+
+model=foreach(i = c(1:NCOL)) %dopar% {
+  caret::train(training, sample_trainingtarget[,i],
+                       trControl = xgb_trcontrol_1,
+                       tuneGrid = xgb_grid_1,
+                       method = "xgbTree")
+}
+
+parallel::stopCluster(cl)
+
+end_time = Sys.time()
+(time = end_time - start_time)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pred_list = matrix(nrow = nrow(test), ncol=NCOL)
+
+for (i in c(1:NCOL)) {
+  xgb_test = xgb.DMatrix(data = as.matrix(test), label = as.numeric(sample_testtarget[,i]))
+  
+  predicted <- predict(model[[i]]$finalModel, xgb_test)
+  pred_list[,i] = predicted
+}
+
+write.csv(pred_list, "XGB_Result2_50_random.csv", row.names = FALSE)
+
+```
+
+
+
+
+
+
+
+
+```{r}
+start_time = Sys.time()
+
+xgb_train = xgb.DMatrix(data = as.matrix(training), label = trainingtarget[,1])
+xgb_test = xgb.DMatrix(data = as.matrix(test), label = testtarget[,1])
+  
+model_1 <- xgboost(data = xgb_train, max.depth = 8, nrounds =100, eta=0.1, gamma=1)
+#pred_y <- predict(models[[i]], xgb_test)
+
+end_time = Sys.time()
+(time = end_time - start_time)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
