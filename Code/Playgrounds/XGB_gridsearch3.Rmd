@@ -7,6 +7,11 @@ output: pdf_document
 
 ```
 
+
+```{r}
+#install.packages("remotes")
+#remotes::install_github("snoweye/Rmpi_PROF")
+```
 ```{r}
 
 #install.packages('xgboost') 
@@ -15,6 +20,8 @@ output: pdf_document
 library(xgboost)
 library(caret)
 library(foreach)
+library(ggplot2)
+library(iterators)
 ```
 
 
@@ -86,6 +93,12 @@ sample_testtarget = testtarget[,sample_index]
 ```
 
 ```{r}
+# DO NOT RUN
+
+# Hyperparameter tuning
+
+
+# Training
 start_time = Sys.time()
 
 cl <- parallel::makeCluster(NCOL)
@@ -104,19 +117,7 @@ end_time = Sys.time()
 (time = end_time - start_time)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Prediction
 pred_list = matrix(nrow = nrow(test), ncol=NCOL)
 
 for (i in c(1:NCOL)) {
@@ -129,19 +130,7 @@ for (i in c(1:NCOL)) {
 write.csv(pred_list, "XGB_Result_50_random.csv", row.names = FALSE)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Record the best parameter combination for each gene
 
 best_eta_list = c()
 best_gamma_list = c()
@@ -168,20 +157,7 @@ best_params = data.frame(gene, best_eta_list, best_gamma_list, best_maxdepth_lis
 write.csv(best_params, "XGB_Result_Params_50_random.csv", row.names = FALSE)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Record the loss for each gene for each parameter combination
 
 gene = c(1:NCOL)
 param_combination = dim(xgb_grid_1)[1]
@@ -207,6 +183,8 @@ write.csv(loss_mat, "XGB_Result_loss_50_random.csv", row.names = FALSE)
 
 
 ```{r}
+# Choose 1 parameter combination with lowest average loss across all genes
+
 loss_mat = read.csv("XGB_Result_loss_50_random.csv")
 
 avg_loss_list = c()
@@ -216,102 +194,127 @@ for (i in c(1:ncol(loss_mat))) {
   avg_loss_list = c(avg_loss_list, avg_rmse)
 }
 
-which.min(avg_loss_list)
-xgb_grid_1$loss = avg_loss_list
+param_loss = xgb_grid_1
+
+param_loss$loss = avg_loss_list
+param_loss = param_loss[,c(1, 2, 3, 4, 8)]
+(best_param_combination = param_loss[which.min(avg_loss_list),])
+
 ```
+```{r}
+ggplot(param_loss, aes(x = max_depth, y = loss)) +
+    geom_point(aes(color = factor(eta), shape = factor(nrounds))) +
+  facet_wrap(~gamma, nrow=1)
+```
+
 
 
 
 
 ```{r}
-xgb_grid_1 = expand.grid(
-  nrounds = 100,
-  eta = 0.1,
-  max_depth = 2,
-  gamma = 1,
-  min_child_weight = 1, 
-  colsample_bytree = 1,
-  subsample = 1
-)
+iblkcol <- function(a, chunks) {
+  n <- ncol(a)
+  i <- 1
 
-#training control parameters
+  nextElem <- function() {
+    if (chunks <= 0 || n <= 0) stop('StopIteration')
+    m <- ceiling(n / chunks)
+    r <- seq(i, length=m)
+    i <<- i + m
+    n <<- n - m
+    chunks <<- chunks - 1
+    a[,r, drop=FALSE]
+  }
 
-xgb_trcontrol_1 = trainControl(
-  method = "cv",
-  number = 2,
-  verboseIter = TRUE,
-  returnData = FALSE,
-  returnResamp = "all",
-  #classProbs = FALSE,
-  #summaryFunction = twoClassSummary,
-  allowParallel = TRUE
-)
+  structure(list(nextElem=nextElem), class=c('iblkcol', 'iter'))
+}
+nextElem.iblkcol <- function(obj) obj$nextElem()
 ```
+
+
+```{r}
+NCOL = ncol(sample_trainingtarget)
+MAX_DEPTH = 8
+NROUNDS = 100
+ETA = 0.1
+GAMMA = 1
+N_CLUSTER = 20
+N_CHUNKS = ceiling(NCOL/N_CLUSTER)
+```
+
 
 ```{r}
 start_time = Sys.time()
 
-cl <- parallel::makeCluster(NCOL)
+cl <- parallel::makeCluster(N_CLUSTER)
 doParallel::registerDoParallel(cl)
 
-model=foreach(i = c(1:NCOL)) %dopar% {
-  caret::train(training, sample_trainingtarget[,i],
-                       trControl = xgb_trcontrol_1,
-                       tuneGrid = xgb_grid_1,
-                       method = "xgbTree")
+
+models = foreach(y_train=iblkcol(sample_trainingtarget, N_CHUNKS), .packages=c('foreach','xgboost')) %dopar% {
+    foreach(i=1:ncol(y_train)) %do% 
+      xgboost(data = xgb.DMatrix(data = as.matrix(training), label = y_train[,i]), max.depth = MAX_DEPTH, nrounds = NROUNDS, eta = ETA, gamma = GAMMA)
 }
+
 
 parallel::stopCluster(cl)
 
 end_time = Sys.time()
 (time = end_time - start_time)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pred_list = matrix(nrow = nrow(test), ncol=NCOL)
-
-for (i in c(1:NCOL)) {
-  xgb_test = xgb.DMatrix(data = as.matrix(test), label = as.numeric(sample_testtarget[,i]))
-  
-  predicted <- predict(model[[i]]$finalModel, xgb_test)
-  pred_list[,i] = predicted
-}
-
-write.csv(pred_list, "XGB_Result2_50_random.csv", row.names = FALSE)
-
 ```
-
-
-
 
 
 
 
 
 ```{r}
-start_time = Sys.time()
-
-xgb_train = xgb.DMatrix(data = as.matrix(training), label = trainingtarget[,1])
-xgb_test = xgb.DMatrix(data = as.matrix(test), label = testtarget[,1])
-  
-model_1 <- xgboost(data = xgb_train, max.depth = 8, nrounds =100, eta=0.1, gamma=1)
-#pred_y <- predict(models[[i]], xgb_test)
-
-end_time = Sys.time()
-(time = end_time - start_time)
+pred_list = matrix(nrow = nrow(test), ncol=NCOL)
+index = 1
+for (i in c(1:N_CHUNKS)) {
+  n_model = length(models[[i]])
+  for (j in c(1:n_model)) {
+    xgb_test = xgb.DMatrix(data = as.matrix(test), label = sample_testtarget[,index])
+    pred = predict(models[[i]][[j]], xgb_test)
+    pred_list[,index] = pred
+    index = index+1
+  }
+}
 ```
+
+
+```{r}
+length(models2[[2]])
+```
+
+```{r}
+get_corr(pred_list, sample_testtarget)
+```
+
+
+
+```{r}
+get_corr = function(mat1, mat2) {
+  all_cor = c()
+  n = min(ncol(mat1), ncol(mat2))
+  
+  for (i in c(1:n)) {
+    all_cor = c(all_cor, cor(mat1[,i], mat2[,i]))
+  }
+  
+  return (mean(all_cor))
+}
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
