@@ -9,18 +9,37 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-library(keras)
-library(mlbench)
-library(dplyr)
-library(magrittr)
-library(neuralnet)
-library(tensorflow)
-library(kerastuneR)
-library(kerasR)
-library(ggplot2)
-library(tidyr)
+library("edgeR")
 ```
 
+
+
+```{r}
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Whole Blood.Rdata"))
+df_blood = df
+rownames(df_blood$cpm_tmm) <- df_blood$genes$Symbol 
+colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
+
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Lung.Rdata"))
+df_other = df
+rownames(df_other$cpm_tmm) <- df_other$genes$Symbol 
+colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID
+```
+
+```{r}
+shared_genes <- df_blood$genes$Symbol[df_blood$genes$Symbol%in%df_other$genes$Symbol] 
+shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
+  
+exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
+exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
+```
+
+
+
+```{r}
+save(exp_blood, file="exp_blood.Rdata")
+save(exp_other, file="exp_other.Rdata")
+```
 
 ```{r}
 load("./exp_blood.Rdata")
@@ -56,7 +75,6 @@ exp_combined_shuffled <- exp_combined[rows, ]
 
 data = as.matrix(exp_combined_shuffled)
 
-dimnames(data) = NULL
 ```
 
 ```{r}
@@ -94,10 +112,11 @@ dim(testtarget)
 ```
 
 ```{r}
-write.csv(training, "X_train.csv", row.names = FALSE)
-write.csv(test, "X_test.csv", row.names = FALSE)
-write.csv(trainingtarget, "Y_train.csv", row.names = FALSE)
-write.csv(testtarget, "Y_test.csv", row.names = FALSE)
+dir = getwd()
+save(training, file =paste0(dir,"X_train.RData"))
+save(test, file =paste0(dir,"X_test.RData"))
+save(trainingtarget, file =paste0(dir,"Y_train.RData"))
+save(testtarget, file =paste0(dir,"Y_test.RData"))
 ```
 
 

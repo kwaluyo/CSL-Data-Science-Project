@@ -12,50 +12,144 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(edgeR)
 ```
 
 ```{r}
-testtarget = as.matrix(read.csv("Y_test.csv"))
+dir = getwd()
+load(paste0(dir,"Y_train.RData"))
+load(paste0(dir,"Y_test.RData"))
 ```
 
 ```{r}
-NN_pred = as.matrix(read.csv("Task5_NN4_Prediction.csv"))
+load(paste0(dir,"/NN_train_pred.RData"))
+load(paste0(dir,"/NN_test_pred.RData"))
 ```
 
 ```{r}
-# Read XGB prediction file
-# XGB_pred = as.matrix(read.csv("filename"))
+load(paste0(getwd(),"/XGB_training_pred.RData"))
+load(paste0(getwd(),"/XGB_test_pred.RData"))
 ```
 
 
-```{r}
-# correlation between NN prediction and Ground Truth
 
-all_cor = c()
-for (i in seq(1,ncol(pred),1)) {
-  all_cor = c(all_cor, cor(NN_pred[,i], testtarget[,i]))
+
+```{r}
+get_corr = function(pred, actual) {
+  # Calculate correlation with the test target set
+  correlations <- vector(length = dim(actual)[2])
+  
+  for(z in 1:dim(actual)[2]){
+    gene <- colnames(actual)[z]
+    correlations[z] <- cor(pred[,gene],actual[,gene] )
+  }
+  plot(density(correlations))
+  
+  return(median(correlations))
 }
-(NN_GT_cor = mean(all_cor))
-```
-
-```{r}
-# correlation between XGB prediction and Ground Truth
-
-all_cor = c()
-for (i in seq(1,ncol(pred),1)) {
-  all_cor = c(all_cor, cor(XGB_pred[,i], testtarget[,i]))
-}
-(XGB_GT_cor = mean(all_cor))
 ```
 
 
 ```{r}
-# correlation between XGB prediction and NN prediction
-
-all_cor = c()
-for (i in seq(1,ncol(pred),1)) {
-  all_cor = c(all_cor, cor(XGB_pred[,i], NN_pred[,i]))
-}
-(XGB_NN_cor = mean(all_cor))
+get_corr(NN_train_pred, trainingtarget)
 ```
+
+```{r}
+get_corr(NN_test_pred, testtarget)
+```
+
+```{r}
+get_corr(XGB_train_pred, trainingtarget)
+```
+
+```{r}
+get_corr(XGB_test_pred, testtarget)
+
+```
+
+```{r}
+XGB_test_pred_ordered = XGB_test_pred[,order(colnames(XGB_test_pred))]
+NN_test_pred_ordered = NN_test_pred[,order(colnames(NN_test_pred))]
+```
+
+```{r}
+avg_pred = (XGB_test_pred_ordered + NN_test_pred_ordered)/2
+```
+
+```{r}
+get_corr(avg_pred, testtarget)
+
+```
+
+```{r}
+actual = testtarget
+pred = avg_pred
+
+gene_names = vector(length = dim(actual)[2])
+correlations = vector(length = dim(actual)[2])
+  
+for(z in 1:dim(actual)[2]){
+  gene <- colnames(actual)[z]
+  gene_names[z] = gene
+  correlations[z] <- cor(pred[,gene],actual[,gene] )
+}
+
+df_pred_cor = data.frame(gene_names = gene_names, correlations = correlations)
+```
+
+
+```{r}
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Lung.Rdata"))
+df_lung = df
+corr = rep(NA, length(df_lung$genes$Symbol))
+df_lung_cor = data.frame(gene_names = df_lung$genes$Symbol)
+```
+
+
+NA for gene that's not in whole blood
+```{r}
+merged_corr = merge(df_lung_cor,df_pred_cor, all.x=TRUE)
+```
+
+```{r}
+matched_corr = c()
+for(i in 1:length(df_lung$genes$Symbol)) {
+  matched_corr[i] = merged_corr[merged_corr$gene_names==df_lung$genes$Symbol[i],2]
+}
+```
+
+```{r}
+df_lung$genes$correlations = matched_corr
+```
+
+
+```{r}
+save(df_lung, file="new_lung_data.RData")
+```
+
+```{r}
+load("new_lung_data.RData")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

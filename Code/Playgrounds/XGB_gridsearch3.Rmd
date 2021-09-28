@@ -8,10 +8,7 @@ output: pdf_document
 ```
 
 
-```{r}
-#install.packages("remotes")
-#remotes::install_github("snoweye/Rmpi_PROF")
-```
+
 ```{r}
 
 #install.packages('xgboost') 
@@ -26,17 +23,10 @@ library(iterators)
 
 
 ```{r}
-training = read.csv("X_train.csv")
-
-
-test = read.csv("X_test.csv")
-
-
-trainingtarget = read.csv("Y_train.csv")
-
-
-
-testtarget = read.csv("Y_test.csv")
+training = read.csv("X_train.csv", row.names=1)
+test = read.csv("X_test.csv", row.names=1)
+trainingtarget = read.csv("Y_train.csv", row.names=1)
+testtarget = read.csv("Y_test.csv", row.names=1)
 
 
 dim(training)
@@ -233,15 +223,47 @@ nextElem.iblkcol <- function(obj) obj$nextElem()
 
 
 ```{r}
-NCOL = ncol(sample_trainingtarget)
+NCOL = ncol(trainingtarget)
 MAX_DEPTH = 8
 NROUNDS = 100
 ETA = 0.1
 GAMMA = 1
-N_CLUSTER = 20
-N_CHUNKS = ceiling(NCOL/N_CLUSTER)
+N_CLUSTER = 10
+N_CHUNKS = N_CLUSTER
 ```
 
+
+
+```{r}
+start = 1
+end = 20
+partial_trainingtarget = trainingtarget[,(start:end)]
+partial_testtarget = testtarget[,(start:end)]
+```
+
+
+```{r}
+dir = getwd()
+```
+
+
+```{r}
+train_xgb = function(y_train) {
+  model = list()
+  name = colnames(y_train)[1]
+    for(i in (1:ncol(y_train))) {
+      model[[i]] = xgboost(data = xgb.DMatrix(data = as.matrix(training), label = y_train[,i]), max.depth = MAX_DEPTH, nrounds = NROUNDS, eta = ETA, gamma = GAMMA)
+      names(model[[i]])=colnames(y_train)[i]
+    }
+  
+  save(model, file=paste0(dir,name,".RData"))
+}
+```
+
+
+```{r}
+save.image(file="XGB_training.RData")
+```
 
 ```{r}
 start_time = Sys.time()
@@ -250,16 +272,18 @@ cl <- parallel::makeCluster(N_CLUSTER)
 doParallel::registerDoParallel(cl)
 
 
-models = foreach(y_train=iblkcol(sample_trainingtarget, N_CHUNKS), .packages=c('foreach','xgboost')) %dopar% {
-    foreach(i=1:ncol(y_train)) %do% 
-      xgboost(data = xgb.DMatrix(data = as.matrix(training), label = y_train[,i]), max.depth = MAX_DEPTH, nrounds = NROUNDS, eta = ETA, gamma = GAMMA)
+foreach(y_train=iblkcol(partial_trainingtarget, N_CHUNKS), .packages=c('foreach','xgboost')) %dopar% {
+  train_xgb(y_train)
 }
 
 
 parallel::stopCluster(cl)
 
-end_time = Sys.time()
+end_time = Sys.time() 
 (time = end_time - start_time)
+
+
+
 
 ```
 
@@ -267,62 +291,21 @@ end_time = Sys.time()
 
 
 
-```{r}
 pred_list = matrix(nrow = nrow(test), ncol=NCOL)
 index = 1
 for (i in c(1:N_CHUNKS)) {
   n_model = length(models[[i]])
   for (j in c(1:n_model)) {
-    xgb_test = xgb.DMatrix(data = as.matrix(test), label = sample_testtarget[,index])
+    xgb_test = xgb.DMatrix(data = as.matrix(test), label = testtarget[,index])
     pred = predict(models[[i]][[j]], xgb_test)
     pred_list[,index] = pred
     index = index+1
   }
 }
-```
+write.csv(pred_list, "XGB_prediction_1_1000.csv", row.names = FALSE)
 
 
-```{r}
-length(models2[[2]])
-```
-
-```{r}
-get_corr(pred_list, sample_testtarget)
-```
-
-
-
-```{r}
-get_corr = function(mat1, mat2) {
-  all_cor = c()
-  n = min(ncol(mat1), ncol(mat2))
-  
-  for (i in c(1:n)) {
-    all_cor = c(all_cor, cor(mat1[,i], mat2[,i]))
-  }
-  
-  return (mean(all_cor))
-}
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
 
 
 
