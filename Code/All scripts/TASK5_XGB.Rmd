@@ -1,0 +1,489 @@
+---
+title: "XGB_grid searching"
+output: pdf_document
+---
+
+
+```{r}
+
+#install.packages('xgboost') 
+#install.packages("caret")
+
+library(xgboost)
+library(caret)
+library(foreach)
+library(ggplot2)
+library(iterators)
+```
+
+```{r}
+# Load data
+
+dir = getwd()
+load(paste0(dir,"X_train.RData"))
+load(paste0(dir,"X_test.RData"))
+load(paste0(dir,"Y_train.RData"))
+load(paste0(dir,"Y_test.RData"))
+```
+
+```{r}
+dim(training)
+dim(test)
+dim(trainingtarget)
+dim(testtarget)
+```
+
+```{r}
+ALL_GENE = dim(trainingtarget)[2]
+NUM_GENE = ALL_GENE
+```
+
+
+```{r}
+# Set the grid for hyperparameter tuning
+
+set.seed(321)
+xgb_grid_1 = expand.grid(
+  nrounds = c(50, 100),
+  eta = c(0.01, 0.1),
+  max_depth = c(2, 4, 8),
+  gamma = c(0, 1, 5),
+  min_child_weight = 1, 
+  colsample_bytree = 1,
+  subsample = 1
+)
+
+
+xgb_trcontrol_1 = trainControl(
+  method = "cv",
+  number = 5,
+  verboseIter = TRUE,
+  returnData = FALSE,
+  returnResamp = "all",
+  allowParallel = TRUE
+)
+```
+
+
+```{r}
+# Select 50 random genes
+NCOL = 50
+
+set.seed(321)
+sample_index = sample((ALL_GENE), size=NCOL, replace =F)
+sample_trainingtarget = trainingtarget[,sample_index]
+sample_testtarget = testtarget[,sample_index]
+```
+
+```{r}
+# Running this takes approx ~10 hours
+
+# Hyperparameter tuning
+
+# Training
+start_time = Sys.time()
+
+cl <- parallel::makeCluster(NCOL)
+doParallel::registerDoParallel(cl)
+
+model=foreach(i = c(1:NCOL)) %dopar% {
+  caret::train(training, sample_trainingtarget[,i],
+                       trControl = xgb_trcontrol_1,
+                       tuneGrid = xgb_grid_1,
+                       method = "xgbTree")
+}
+
+parallel::stopCluster(cl)
+
+end_time = Sys.time()
+(time = end_time - start_time)
+
+
+# Prediction
+pred_list = matrix(nrow = nrow(test), ncol=NCOL)
+
+for (i in c(1:NCOL)) {
+  xgb_test = xgb.DMatrix(data = as.matrix(test), label = as.numeric(sample_testtarget[,i]))
+  
+  predicted <- predict(model[[i]]$finalModel, xgb_test)
+  pred_list[,i] = predicted
+}
+
+write.csv(pred_list, "XGB_Result_50_random.csv", row.names = FALSE)
+
+
+# Record the best parameter combination for each gene
+
+best_eta_list = c()
+best_gamma_list = c()
+best_maxdepth_list = c()
+best_nrounds_list = c()
+gene = c(1:NCOL)
+
+for (i in gene) {
+  best_model = model[[i]]$finalModel
+  
+  best_eta = best_model$tuneValue$eta
+  best_gamma = best_model$tuneValue$gamma
+  best_maxdepth = best_model$tuneValue$max_depth
+  best_nrounds = best_model$tuneValue$nrounds
+  
+  best_eta_list = c(best_eta_list, best_eta)
+  best_gamma_list = c(best_gamma_list, best_gamma)
+  best_maxdepth_list = c(best_maxdepth_list, best_maxdepth)
+  best_nrounds_list = c(best_nrounds_list, best_nrounds)
+
+}
+
+best_params = data.frame(gene, best_eta_list, best_gamma_list, best_maxdepth_list, best_nrounds_list)
+write.csv(best_params, "XGB_Result_Params_50_random.csv", row.names = FALSE)
+
+
+# Record the loss for each gene for each parameter combination
+
+gene = c(1:NCOL)
+param_combination = dim(xgb_grid_1)[1]
+
+loss_mat = matrix(nrow = length(gene), ncol=param_combination)
+
+
+for (i in gene) {
+  for (j in c(1:param_combination)) {
+    rmse = model[[i]]$results$RMSE[j]
+    loss_mat[i,j] = rmse
+  }
+}
+
+write.csv(loss_mat, "XGB_Result_loss_50_random.csv", row.names = FALSE)
+```
+
+
+
+```{r}
+# Choose 1 parameter combination with lowest average loss across all genes
+
+loss_mat = read.csv("XGB_Result_loss_50_random.csv")
+
+avg_loss_list = c()
+
+for (i in c(1:ncol(loss_mat))) {
+  avg_rmse = mean(loss_mat[,i])
+  avg_loss_list = c(avg_loss_list, avg_rmse)
+}
+
+param_loss = xgb_grid_1
+
+param_loss$loss = avg_loss_list
+param_loss = param_loss[,c(1, 2, 3, 4, 8)]
+(best_param_combination = param_loss[which.min(avg_loss_list),])
+
+```
+
+
+```{r}
+ggplot(param_loss, aes(x = max_depth, y = loss)) +
+    geom_point(aes(color = factor(eta), shape = factor(nrounds)), size=3) +
+  labs(color='Eta', shape='Number of Rounds')+
+  xlab("Maximum Depth") + ylab("Validation Loss") +
+  facet_wrap(~gamma, nrow=1, labeller = label_both)
+```
+
+
+```{r}
+# Create a folder inside the "dir" path called "trained"
+# Continue below
+
+
+
+# Set up the model parameters
+NCOL = ncol(trainingtarget)
+MAX_DEPTH = 8
+NROUNDS = 100
+ETA = 0.1
+GAMMA = 1
+
+
+# Set up the paralleling parameters
+N_CLUSTER = 15
+N_CHUNKS = N_CLUSTER
+
+
+# Resize dataset (NOTE: Leave this chunk even when training the entire dataset, just modify "end")
+start = 1
+end = NCOL
+partial_trainingtarget = trainingtarget[,(start:end)]
+partial_testtarget = testtarget[,(start:end)]
+
+```
+
+
+
+```{r}
+# Create a list of gene indexes
+# Each core will loop over the genes in the indexes list
+# Each core will sequentially save each single trained gene
+# This will end up in a folder containing "end" number of files (one for each gene)
+
+
+
+# Create the indexes of the genes
+ts <- 1:end
+bs <- ceiling(length(ts) / N_CHUNKS) 
+indexes <- split(ts, rep(1:N_CHUNKS, each=bs, length.out = length(ts)))
+
+# Re-update the number of clusters if the required ones have changed
+N_CLUSTER <- length(indexes)
+N_CHUNKS = N_CLUSTER
+
+dir = getwd()
+
+```
+
+
+```{r}
+# Record starting time
+start_time = Sys.time()
+
+
+
+# Set up the clusters
+cl <- parallel::makeCluster(N_CLUSTER)
+doParallel::registerDoParallel(cl)
+
+
+
+# Start the parallel clustering
+foreach(i = 1:N_CLUSTER, .packages=c('foreach','xgboost')) %dopar% {
+  
+  write.table(paste("process",i,"started"), file=paste0(dir,"/trained2/","log",i,".txt"))
+  
+  # Select the index for this cluster
+  genes <- indexes[[i]]
+  
+  # Select the training target columns corresponding to these genes
+  y_train <- partial_trainingtarget[,genes]
+  
+  
+  # Within each cluster loop in each of the genes
+  for(j in 1:ncol(y_train) ) {
+    
+    # Extract the name of that gene
+    gene_name = colnames(y_train)[j]
+    
+    write.table(paste("gene",gene_name,"started"), file=paste0(dir,"/trained2/","log",i,".txt"), append = TRUE)
+    
+    start_time1 = Sys.time()
+    
+    
+    # train the model the the j gene
+    model =
+      xgboost(
+        data = xgb.DMatrix(data = as.matrix(training), label = y_train[,j]), 
+        max.depth = MAX_DEPTH, 
+        nrounds = NROUNDS, 
+        eta = ETA, 
+        gamma = GAMMA,
+        nthread=2
+      )
+    
+    end_time1 = Sys.time() 
+    end_time1=end_time1 - start_time1
+
+    
+    write.table(paste("gene",gene_name,"finished at",end_time1), file=paste0(dir,"/trained2/","log",i,".txt"), append = TRUE)
+    
+    
+    # Save both the trained model as well as the gene name
+    save(model,gene_name, file=paste0(dir,"/trained2/",gene_name,".RData"))
+    
+  }
+}
+
+
+# It is normal for this process to spit put a list of NULL as nothing is assigned to the foreach
+
+
+# Stop the parallel clustering
+parallel::stopCluster(cl)
+
+# Calculate the running time
+
+end_time = Sys.time() 
+(time = end_time - start_time)
+
+
+```
+
+    
+    
+```{r}
+# Check that the genes are all there
+files <- list.files(paste0(dir,"/GTEx_pred/trained2/"))
+
+files1 <- files[substr(files,1,3)!="log"]
+genes_trained <- gsub("*\\.RData","",files1)
+
+# Check that all the genes have been trained
+sum(!colnames(trainingtarget)%in%genes_trained)
+
+```
+
+      
+
+```{r}
+# Predict on the training set
+files <- list.files(paste0(dir,"/trained2/"))
+files1 <- files[substr(files,1,3)!="log"]
+
+
+# Set up the clusters
+cl <- parallel::makeCluster(N_CLUSTER)
+doParallel::registerDoParallel(cl)
+
+
+# Start the parallel clustering
+training_pred <- foreach(i = 1:N_CLUSTER, .packages=c('foreach','xgboost'), .combine='cbind') %dopar% {
+ 
+  
+  # Select the index for this cluster
+  genes <- indexes[[i]]
+  
+  # Create emoty matrix
+  training_pred1 <- data.frame(matrix(NA,nrow=nrow(training),ncol=length(genes)) )
+  
+  
+  #loop over the indexes
+  for(z in 1:length(genes) ){
+  
+  file <- files1[genes[z]]
+  load(paste0(dir,"/trained2/",file))
+  
+  colnames(training_pred1)[z] <- gene_name
+  
+  training_pred1[,z] <- predict(model, as.matrix(training))
+  
+  }
+  
+  training_pred1
+  
+
+
+}
+
+# Stop the parallel clustering
+parallel::stopCluster(cl)
+
+
+save(training_pred,file =paste0(dir,"XGB_training_pred.RData") )
+
+
+# Make into a matrix
+training_pred <- as.matrix(training_pred)
+training_pred <- training_pred[,colnames(partial_trainingtarget)]
+
+
+
+# Calculate correlations with the training target set
+correlations <- vector(length = end)
+
+for(z in 1:end){
+  gene <- colnames(training_pred)[z]
+  correlations[z] <- cor(training_pred[,gene],partial_trainingtarget[,gene] )
+}
+
+
+
+# Observe the median correaltion
+median(correlations)
+
+```
+
+
+
+
+```{r}
+# Predict on the test set
+
+# Set up the clusters
+cl <- parallel::makeCluster(N_CLUSTER)
+doParallel::registerDoParallel(cl)
+
+
+# Start the parallel clustering
+test_pred <- foreach(i = 1:N_CLUSTER, .packages=c('foreach','xgboost'), .combine='cbind') %dopar% {
+ 
+  
+  # Select the index for this cluster
+  genes <- indexes[[i]]
+  
+  # Create emoty matrix
+  test_pred1 <- data.frame(matrix(NA,nrow=nrow(test),ncol=length(genes)) )
+  
+  
+  #loop over the indexes
+  for(z in 1:length(genes) ){
+  
+  file <- files1[genes[z]]
+  load(paste0(dir,"/trained2/",file))
+  
+  colnames(test_pred1)[z] <- gene_name
+  
+  test_pred1[,z] <- predict(model, as.matrix(test))
+  
+  }
+  
+  test_pred1
+  
+
+
+}
+
+# Stop the parallel clustering
+parallel::stopCluster(cl)
+
+
+save(test_pred,file =paste0(dir,"XGB_test_pred.RData") )
+
+# Make into a matrix
+test_pred <- as.matrix(test_pred)
+test_pred <- test_pred[,colnames(partial_testtarget)]
+
+
+
+# Calculate correlations with the test target set
+correlations <- vector(length = end)
+
+for(z in 1:end){
+  gene <- colnames(test_pred)[z]
+  correlations[z] <- cor(test_pred[,gene],partial_testtarget[,gene] )
+}
+
+
+
+# Observe the median correaltion
+median(correlations)
+
+plot(density(correlations))
+
+
+```
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

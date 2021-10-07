@@ -1,0 +1,141 @@
+---
+title: "Untitled"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library("edgeR")
+```
+
+
+
+```{r}
+# Load the blood and lung data
+
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Whole Blood.Rdata"))
+df_blood = df
+rownames(df_blood$cpm_tmm) <- df_blood$genes$Symbol 
+colnames(df_blood$cpm_tmm) <- df_blood$samples$SUBJID
+
+load(paste("./TMM_norm_filt_counts/TMM_filt_counts_Lung.Rdata"))
+df_other = df
+rownames(df_other$cpm_tmm) <- df_other$genes$Symbol 
+colnames(df_other$cpm_tmm) <- df_other$samples$SUBJID
+```
+
+```{r}
+# Only retain genes that are present in both blood and lung
+shared_genes <- df_blood$genes$Symbol[df_blood$genes$Symbol%in%df_other$genes$Symbol] 
+shared_subjects <- df_blood$samples$SUBJID[df_blood$samples$SUBJID%in%df_other$samples$SUBJID]
+  
+exp_blood <- df_blood$cpm_tmm[shared_genes,shared_subjects] 
+exp_other <- df_other$cpm_tmm[shared_genes,shared_subjects] 
+```
+
+```{r}
+save(exp_blood, file="exp_blood.Rdata")
+save(exp_other, file="exp_other.Rdata")
+```
+
+```{r}
+load("./exp_blood.Rdata")
+load("./exp_other.Rdata")
+```
+
+```{r}
+exp_blood_t = t(exp_blood)
+exp_other_t = t(exp_other)
+```
+
+```{r}
+ALL_GENE = ncol(exp_other_t)
+N = nrow(exp_other_t)
+NUM_GENE = ALL_GENE # number of genes to be predicted
+
+exp_combined = cbind(exp_blood_t[,1:ALL_GENE], exp_other_t[,1:NUM_GENE])
+```
+
+
+```{r}
+# shuffle dataset for randomisation
+
+set.seed(321)
+
+rows <- sample(nrow(exp_combined))
+exp_combined_shuffled <- exp_combined[rows, ]
+
+data = as.matrix(exp_combined_shuffled)
+
+```
+
+```{r}
+# Scaling
+data = scale(data)
+```
+
+```{r}
+dim(exp_blood_t)
+dim(data)
+```
+
+```{r}
+# Partition training:test=80:20
+
+train_proportion = 0.8
+test_proportion = 1-train_proportion
+
+n_train = round(N*train_proportion)
+n_test = N - n_train
+
+training = data[1:n_train, 1:ALL_GENE]
+test = data[(n_train+1):N, 1:ALL_GENE]
+
+trainingtarget = data[1:n_train, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+testtarget = data[(n_train+1):N, (ALL_GENE+1):(ALL_GENE+NUM_GENE)]
+
+```
+
+```{r}
+dim(training)
+dim(test)
+
+dim(trainingtarget)
+dim(testtarget)
+```
+
+```{r}
+dir = getwd()
+save(training, file =paste0(dir,"X_train.RData"))
+save(test, file =paste0(dir,"X_test.RData"))
+save(trainingtarget, file =paste0(dir,"Y_train.RData"))
+save(testtarget, file =paste0(dir,"Y_test.RData"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
