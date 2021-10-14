@@ -13,6 +13,7 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(edgeR)
+library(mltools)
 ```
 
 ```{r}
@@ -45,7 +46,30 @@ get_corr = function(pred, actual) {
 
 
 ```{r}
+get_residual = function(pred, actual) {
+  # Calculate correlation with the test target set
+  
+  res_matrix = matrix(nrow= dim(actual)[1],ncol=dim(actual)[2])
+  
+  
+  for(z in 1:dim(actual)[2]){
+    gene <- colnames(actual)[z]
+    res_matrix[,z] <- pred[,gene]-actual[,gene]
+  }
+
+  return(res_matrix)
+}
+```
+
+```{r}
+res = get_residual(NN_train_pred, trainingtarget)
+mse = mean(res^2)
+```
+
+
+```{r}
 correlations = get_corr(NN_train_pred, trainingtarget)
+print(median(correlations))
 cor_df = as.data.frame(correlations)
   
 ggplot(data = cor_df, aes(x = correlations)) + 
@@ -63,9 +87,14 @@ ggplot(data = cor_df, aes(x = correlations)) +
 ```
 
 ```{r}
+
+```
+
+
+```{r}
 correlations = get_corr(XGB_train_pred, trainingtarget)
 cor_df = as.data.frame(correlations)
-  
+print(median(correlations))  
 ggplot(data = cor_df, aes(x = correlations)) + 
   ggtitle("XGBoost Training Prediction Correlation Density Plot") + 
   geom_density()
@@ -77,6 +106,22 @@ cor_df = as.data.frame(correlations)
   
 ggplot(data = cor_df, aes(x = correlations)) + 
   ggtitle("XGBoost Test Correlation Density Plot") + 
+  geom_density()
+```
+
+
+```{r}
+XGB_training_pred_ordered = XGB_train_pred[,order(colnames(XGB_train_pred))]
+NN_training_pred_ordered = NN_train_pred[,order(colnames(NN_train_pred))]
+# Ensemble prediction
+avg_training_pred = (XGB_training_pred_ordered + NN_training_pred_ordered)/2
+
+correlations = get_corr(avg_training_pred, trainingtarget)
+print(median(correlations))  
+cor_df = as.data.frame(correlations)
+  
+ggplot(data = cor_df, aes(x = correlations)) + 
+  ggtitle("Ensemble Prediction Correlation Density Plot") + 
   geom_density()
 ```
 
@@ -98,6 +143,47 @@ ggplot(data = cor_df, aes(x = correlations)) +
   ggtitle("Ensemble Prediction Correlation Density Plot") + 
   geom_density()
 ```
+
+
+
+```{r}
+combine_df = data.frame(XGB = get_corr(XGB_test_pred, testtarget))
+df = combine_df %>% pivot_longer(c(XGB), names_to="model", values_to="correlation")
+
+ggplot() + 
+  geom_density(data=df, aes(x=correlation, group=model, color=model), adjust=2) + 
+  ggtitle("XGBoost Prediction Correlation Density Plot") + 
+  scale_color_manual(values = c("red")) +
+  xlab("Correlation") +
+  ylab("Density")
+```
+
+
+
+```{r}
+combine_df = data.frame(XGB = get_corr(XGB_test_pred, testtarget), NN = get_corr(NN_test_pred, testtarget))
+df = combine_df %>% pivot_longer(c(XGB, NN), names_to="model", values_to="correlation")
+
+ggplot() + 
+  geom_density(data=df, aes(x=correlation, group=model, color=model), adjust=2) +
+  ggtitle("Neural Network Prediction Correlation Density Plot") + 
+  scale_color_manual(values = c("blue", "red")) +
+  xlab("Correlation") +
+  ylab("Density")
+```
+
+```{r}
+combine_df = data.frame(NN = get_corr(NN_test_pred, testtarget), XGB = get_corr(XGB_test_pred, testtarget), ENSM = get_corr(avg_pred, testtarget))
+df = combine_df %>% pivot_longer(c(NN, XGB, ENSM), names_to="model", values_to="correlation")
+
+ggplot() + 
+  geom_density(data=df, aes(x=correlation, group=model, color=model), adjust=2) +
+  ggtitle("Ensemble Prediction Correlation Density Plot") + 
+  scale_color_manual(values = c("green", "blue", "red")) +
+  xlab("Correlation") +
+  ylab("Density")
+```
+
 
 ```{r}
 # Get correlations from the ensemble prediction and store it in a data frame along with its corresponding gene symbol
