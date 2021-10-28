@@ -1,0 +1,33 @@
+---
+title: "Untitled"
+author: "kartika waluyo"
+date: "28/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+$$
+F_n = F_{n-1} + \eta\Delta_n
+$$
+
+
+$$
+F_m(X) = F_{m-1}(X) + a_mh_m(X,r_{m-1})
+$$
+
+$$
+ENSpred = \frac{1}{2}NNpred + \frac{1}{2}XGBpred =
+\frac{1}{2}\begin{bmatrix}
+\hat{y}_{11} & \cdots & \hat{y}_{1p}\\
+\vdots & \ddots\\
+\hat{y}_{n1} & \cdots & \hat{y}_{np}\\
+\end{bmatrix} + 
+\frac{1}{2}\begin{bmatrix}
+\hat{z}_{11} & \cdots & \hat{z}_{1p}\\
+\vdots & \ddots\\
+\hat{z}_{n1} & \cdots & \hat{z}_{np}\\
+\end{bmatrix}
+$$
