@@ -31,3 +31,46 @@ ENSpred = \frac{1}{2}NNpred + \frac{1}{2}XGBpred =
 \hat{z}_{n1} & \cdots & \hat{z}_{np}\\
 \end{bmatrix}
 $$
+
+
+
+```{r echo=FALSE}
+library(knitr)
+
+xgb_result = data.frame(MAE=c(0.1775177,0.6653771), MSE=c(0.05393484, 0.735219))
+rownames(xgb_result) = c("Training", "Test")
+
+nn_result = data.frame(MAE=c(0.5993975,0.6464047), MSE=c(0.6128888, 0.6931747))
+rownames(nn_result) = c("Training", "Test")
+
+coef_result = data.frame(Training=c(0.990975,0.6278658,0.9205496), Test=c(0.4364947, 0.4887672,0.4976427))
+rownames(coef_result) = c("XGBoost", "Neural Network", "Ensemble")
+```
+
+
+```{r echo=FALSE, results='asis'}
+kable(xgb_result, "latex", align='c', caption='XGBoost Final Model Result')
+```
+
+
+```{r echo=FALSE, results='asis'}
+kable(nn_result, "latex", align='c', caption='Neural Network Final Model Result')
+```
+
+
+```{r echo=FALSE, results='asis'}
+kable(coef_result, "latex", align='c', caption='Median Correlation')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
