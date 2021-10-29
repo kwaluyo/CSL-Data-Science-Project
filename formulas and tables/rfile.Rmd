@@ -1,22 +1,66 @@
 ---
-title: "Untitled"
-author: "kartika waluyo"
-date: "28/10/2021"
-output: pdf_document
+title: Data Science Project Pt. 2 (MAST90107)
+subtitle: Final Report, Semester 2 
+author:
+  - Kartika Waluyo, 1000555
+  - Vrinda Rajendar Rajanahally, 1129446
+output: 
+  pdf_document:
+    fig_caption: TRUE
+    
 ---
+\centering
+\raggedright
+\newpage
+\tableofcontents
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-$$
-F_n = F_{n-1} + \eta\Delta_n
-$$
+\newpage
+
+![Sample from Various Tissues (GTEx Portal, 2021)](../figs/fig1.png)
 
 
-$$
-F_m(X) = F_{m-1}(X) + a_mh_m(X,r_{m-1})
-$$
+![Data Splitting for Training, validation, and Test Set (3.1. Cross-Validation: Evaluating Estimator Performance, 2021)](../figs/fig2.png)
+
+
+![Rough Illustration on How XGBoost Works (How XGBoost Works - Amazon SageMaker, 2021)](../figs/fig3.png)
+
+![Biological Neural Network (Welcome to SEER Training | SEER Training, 2021)](../figs/fig4.png)
+
+![Perceptron (Sand et al., 2019)](../figs/fig5.png)
+
+![Multi-layer Neural Network (An Overview on Multilayer Perceptron (MLP), 2021)](../figs/fig6.png)
+
+![Neural Network Algorithm](../figs/fig7.png)
+
+![Illustration of Our Neural Network](../figs/fig8.png)
+
+![XGBoost Gridsearch Results](../figs/fig9.png)
+
+![Neural network Gridsearch Results](../figs/fig10.png)
+
+![Test Prediction Correlation with Median Line](../figs/fig11.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+$F_n = F_{n-1} + \eta\Delta_n$     (1)
+
+
+$F_m(X) = F_{m-1}(X) + a_mh_m(X,r_{m-1})$     (2)
+
 
 $$
 ENSpred = \frac{1}{2}NNpred + \frac{1}{2}XGBpred =
@@ -29,7 +73,7 @@ ENSpred = \frac{1}{2}NNpred + \frac{1}{2}XGBpred =
 \hat{z}_{11} & \cdots & \hat{z}_{1p}\\
 \vdots & \ddots\\
 \hat{z}_{n1} & \cdots & \hat{z}_{np}\\
-\end{bmatrix}
+\end{bmatrix} (3)
 $$
 
 
